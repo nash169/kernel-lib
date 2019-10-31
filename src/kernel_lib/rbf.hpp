@@ -13,10 +13,22 @@ namespace kernel_lib {
     template <typename Params>
     class Rbf : public AbstractKernel<Params, Rbf<Params>> {
     public:
-        Rbf(const double sigma = Params::kernel_rbf::sigma()) : sigma_(sigma) {}
-        ~Rbf() {}
+        Rbf(size_t dim = 1) : sigma_(Params::kernel_rbf::sigma()) {}
 
-    private:
+        Eigen::MatrixXd kernel() const
+        {
+            Eigen::MatrixXd log_k = log_kernel();
+
+            return log_k.array().exp();
+        }
+
+        Eigen::MatrixXd log_kernel() const
+        {
+            Eigen::MatrixXd log_k = -AbstractKernel<Params, Rbf<Params>>::diff_.rowwise().squaredNorm() * sigma_ / 2;
+            return log_k;
+        }
+
+    protected:
         double sigma_;
     };
 

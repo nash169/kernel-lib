@@ -2,15 +2,27 @@
 #define KERNEL_LIB_TOOLS_MATH_HPP
 
 #include <Eigen/Core>
+#include <iostream>
 
 namespace kernel_lib {
     namespace tools {
-        template <typename Input, typename Output>
-        Output c_reshape(Input& M, int num_rows, int num_cols)
+        Eigen::MatrixXd c_reshape(Eigen::MatrixXd M, int num_rows, int num_cols)
         {
-            Eigen::Map<Output> S(M.transpose().data(), num_cols, num_rows);
+            M.transposeInPlace();
+
+            Eigen::Map<Eigen::MatrixXd> S(M.data(), num_cols, num_rows);
 
             return S.transpose();
+        }
+
+        Eigen::MatrixXd repeat(Eigen::MatrixXd M, int num_rows, int num_cols)
+        {
+            // Rows repeat
+            Eigen::MatrixXd T = c_reshape(M.replicate(1, num_rows), M.rows() * num_rows, M.cols());
+
+            Eigen::Map<Eigen::MatrixXd> S(Eigen::MatrixXd(T.replicate(num_cols, 1)).data(), T.rows(), T.cols() * num_cols);
+
+            return S;
         }
 
         Eigen::MatrixXd matrix_transpose(Eigen::MatrixXd& M)

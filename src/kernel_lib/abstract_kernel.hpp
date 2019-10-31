@@ -1,27 +1,59 @@
 #ifndef KERNEL_LIB_KERNEL_HPP
 #define KERNEL_LIB_KERNEL_HPP
 
+#include "kernel_lib/tools/macros.hpp"
+#include "kernel_lib/tools/math.hpp"
 #include <Eigen/Core>
 
 namespace kernel_lib {
     namespace defaults {
         struct kernel {
-            BO_PARAM(double, sigma_f, 0.01);
-            BO_PARAM(double, sigma_n, 1e-8);
-            BO_PARAM(bool, var, true)
+            BO_PARAM(double, sigma_f, 1.0);
+            BO_PARAM(double, sigma_n, 0.0);
         };
     } // namespace defaults
 
     template <typename Params, typename Kernel>
     class AbstractKernel {
     public:
-        AbstractKernel(const double sigma_f = Params::kernel::sigma_f(), const double sigma_n = Params::kernel::sigma_n()) : sigma_f_(sigma_f), sigma_n_(sigma_n), var(Params::kernel::var()) {}
+        AbstractKernel(size_t dim = 1) : sigma_f_(Params::kernel::sigma_f())
+        {
+            sigma_n_ = (Params::kernel::sigma_n() == 0) ? 1e-8 : Params::kernel::sigma_n();
+        }
 
-        virtual ~AbstractKernel() {}
+        Eigen::MatrixXd operator()(const Eigen::MatrixXd& x = -1, const Eigen::MatrixXd& y = -1)
+        {
+            if (x.cast<bool>().any()) {
+                assert(y.cast<bool>().any());
+                set_data(x, y);
+            }
 
-    private:
+            Eigen::Matrix<bool, Eigen::Dynamic, 1> vec_noise = diff_.rowwise().norm().array() <= 1e-8;
+
+            return static_cast<const Kernel*>(this)->kernel() * sigma_f_ + vec_noise.cast<double>() * sigma_n_;
+        }
+
+        void set_data(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
+        {
+            n_features_ = x.cols();
+            assert(n_features_ == y.cols());
+
+            x_samples_ = x.rows();
+            y_samples_ = y.rows();
+
+            x_ = x;
+            y_ = y;
+            X_ = x.replicate(y_samples_, 1);
+            Y_ = tools::repeat(y, x_samples_, 1);
+            diff_ = X_ - Y_;
+        }
+
+    protected:
+        int n_features_, x_samples_, y_samples_;
+
         double sigma_f_, sigma_n_;
-        bool var;
+
+        Eigen::MatrixXd x_, y_, X_, Y_, diff_;
     };
 
 } // namespace kernel_lib
