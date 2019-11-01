@@ -17,7 +17,7 @@ struct Params {
 
 int main(int argc, char const* argv[])
 {
-    int dim = 2, num_points = 10000;
+    int dim = 2, num_points = 20000;
 
     Eigen::MatrixXd x = Eigen::MatrixXd::Random(num_points, dim);
 
@@ -26,12 +26,13 @@ int main(int argc, char const* argv[])
     //     0.1270, 0.0975;
 
     Rbf<Params> k;
+    // k(x, x);
 
     auto t1 = std::chrono::high_resolution_clock::now();
     k(x, x);
     auto t2 = std::chrono::high_resolution_clock::now();
 
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count();
 
     std::cout << duration << std::endl;
 

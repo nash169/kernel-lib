@@ -21,16 +21,18 @@ namespace kernel_lib {
             sigma_n_ = (Params::kernel::sigma_n() == 0) ? 1e-8 : Params::kernel::sigma_n();
         }
 
-        Eigen::MatrixXd operator()(const Eigen::MatrixXd& x = -1, const Eigen::MatrixXd& y = -1)
+        Eigen::MatrixXd operator()()
         {
-            if (x.cast<bool>().any()) {
-                assert(y.cast<bool>().any());
-                set_data(x, y);
-            }
-
             Eigen::Matrix<bool, Eigen::Dynamic, 1> vec_noise = diff_.rowwise().norm().array() <= 1e-8;
 
             return static_cast<const Kernel*>(this)->kernel() * sigma_f_ + vec_noise.cast<double>() * sigma_n_;
+        }
+
+        Eigen::MatrixXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
+        {
+            set_data(x, y);
+
+            return (*this)();
         }
 
         void set_data(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
@@ -44,7 +46,8 @@ namespace kernel_lib {
             x_ = x;
             y_ = y;
             X_ = x.replicate(y_samples_, 1);
-            Y_ = tools::repeat(y, x_samples_, 1);
+            // Y_ = tools::repeat(y, x_samples_, 1);
+            Y_ = y(Eigen::VectorXi::LinSpaced(x_samples_ * y_samples_, 0, y_samples_ - 1), Eigen::all);
             diff_ = X_ - Y_;
         }
 
