@@ -2,9 +2,6 @@
 # encoding: utf-8
 
 import sys
-import os
-import fnmatch
-import glob
 
 sys.path.insert(0, sys.path[0] + "/waf_tools")
 
@@ -14,12 +11,13 @@ APPNAME = "kernel-lib"
 srcdir = "."
 blddir = "build"
 
+import glob
+import os
+import fnmatch
+
 from waflib.Tools import waf_unit_test
 from waflib import Logs
 from waflib.Build import BuildContext
-import eigen
-import boost
-import avx
 
 
 def options(opt):
@@ -28,6 +26,8 @@ def options(opt):
     opt.load("compiler_c")
     opt.load("boost")
     opt.load("eigen")
+    opt.load("tbb")
+    opt.load("mkl")
 
     # Add options
     opt.add_option("--shared", action="store_true", help="build shared library")
@@ -46,12 +46,17 @@ def configure(cfg):
     cfg.load("compiler_c")
     cfg.load("boost")
     cfg.load("eigen")
+    cfg.load("tbb")
+    cfg.load("mkl")
+    cfg.load("avx")
 
     # Check the presence of the necessary libraries
     cfg.check_boost(
         lib="regex system filesystem unit_test_framework", min_version="1.46"
     )
     cfg.check_eigen(required=True)
+    cfg.check_tbb(required=False)
+    cfg.check_mkl()
 
     # Don't know... define some kind of lib type (check this)
     cfg.env["lib_type"] = "cxxstlib"
@@ -86,7 +91,7 @@ def build(bld):
     suffix = "dylib" if bld.env["DEST_OS"] == "darwin" else "so"
 
     # Define necessary libraries
-    libs = "BOOST EIGEN"
+    libs = "BOOST EIGEN "
 
     # Get flags
     cxxflags = bld.get_env()["CXXFLAGS"]
