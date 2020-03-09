@@ -31,6 +31,9 @@ def configure(cfg):
     cfg.load("compiler_cxx")
     cfg.load("compiler_c")
     cfg.load("eigen")
+    cfg.load("tbb")
+    cfg.load("mkl")
+    cfg.load("avx")
 
     # Don't know... define some kind of lib type (check this)
     cfg.env["lib_type"] = "cxxstlib"
@@ -65,7 +68,7 @@ def build(bld):
     suffix = "dylib" if bld.env["DEST_OS"] == "darwin" else "so"
 
     # Define necessary libraries
-    libs = "BOOST EIGEN"
+    libs = "BOOST EIGEN "
 
     # Get flags
     cxxflags = bld.get_env()["CXXFLAGS"]
