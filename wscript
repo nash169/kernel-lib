@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import sys
 import os
 import fnmatch
-import glob
-
-sys.path.insert(0, sys.path[0] + "/waf_tools")
 
 VERSION = "1.0.0"
 APPNAME = "kernel-lib"
@@ -14,44 +10,27 @@ APPNAME = "kernel-lib"
 srcdir = "."
 blddir = "build"
 
-from waflib.Tools import waf_unit_test
-from waflib import Logs
-from waflib.Build import BuildContext
-import eigen
-import boost
-import avx
-
 
 def options(opt):
     # Load modules necessary in the configuration function
     opt.load("compiler_cxx")
     opt.load("compiler_c")
-    opt.load("boost")
-    opt.load("eigen")
+    opt.load("eigen", tooldir="waf_tools")
 
     # Add options
-    opt.add_option("--shared", action="store_true", help="build shared library")
-    opt.add_option("--static", action="store_true", help="build static library")
-    opt.add_option(
-        "--no-avx",
-        action="store_true",
-        help="build without AVX flags",
-        dest="disable_avx",
-    )
+    opt.add_option("--shared", action="store_true",
+                   help="build shared library")
+    opt.add_option("--static", action="store_true",
+                   help="build static library")
+    opt.add_option("--no-avx", action="store_true",
+                   help="build without AVX flags", dest="disable_avx",)
 
 
 def configure(cfg):
     # Load modules defined in the option function
     cfg.load("compiler_cxx")
     cfg.load("compiler_c")
-    cfg.load("boost")
     cfg.load("eigen")
-
-    # Check the presence of the necessary libraries
-    cfg.check_boost(
-        lib="regex system filesystem unit_test_framework", min_version="1.46"
-    )
-    cfg.check_eigen(required=True)
 
     # Don't know... define some kind of lib type (check this)
     cfg.env["lib_type"] = "cxxstlib"
@@ -97,7 +76,7 @@ def build(bld):
     bld.get_env()["kernel_lib_libs"] = libs
 
     # Check if all the libraries have been loaded correctly
-    if len(bld.env.INCLUDES_EIGEN) == 0 or len(bld.env.INCLUDES_BOOST) == 0:
+    if len(bld.env.INCLUDES_EIGEN) == 0:
         bld.fatal("Some libraries were not found! Cannot proceed!")
 
     # Define sources files
@@ -106,21 +85,12 @@ def build(bld):
         for filename in fnmatch.filter(filenames, "*.cpp"):
             files.append(os.path.join(root, filename))
 
-    files = [f[len(bld.path.abspath()) + 1 :] for f in files]
+    files = [f[len(bld.path.abspath()) + 1:] for f in files]
     kernel_lib_srcs = " ".join(files)
 
     # Build library
     if bld.options.shared:
         bld.shlib(
-            features="cxx " + bld.env["lib_type"],
-            source=kernel_lib_srcs,
-            target=libname,
-            includes="./src",
-            uselib=libs,
-            cxxxflags=cxxflags,
-        )
-    elif bld.options.static:
-        bld.stlib(
             features="cxx " + bld.env["lib_type"],
             source=kernel_lib_srcs,
             target=libname,
@@ -145,7 +115,7 @@ def build(bld):
     for root, dirnames, filenames in os.walk(bld.path.abspath() + "/src/"):
         for filename in fnmatch.filter(filenames, "*.hpp"):
             install_files.append(os.path.join(root, filename))
-    install_files = [f[len(bld.path.abspath()) + 1 :] for f in install_files]
+    install_files = [f[len(bld.path.abspath()) + 1:] for f in install_files]
 
     # Install headers
     for f in install_files:
@@ -159,4 +129,3 @@ def build(bld):
         bld.install_files("${PREFIX}/lib", blddir + "/kernel_lib.a")
     else:
         bld.install_files("${PREFIX}/lib", blddir + "/kernel_lib." + suffix)
-

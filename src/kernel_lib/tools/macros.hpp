@@ -64,17 +64,4 @@
 #define BO_PARAM_STRING(Name, Value) \
     static constexpr const char* Name() { return Value; }
 
-#define BO_PARAMS(Stream, P)                                  \
-    struct Ps__ {                                             \
-        Ps__()                                                \
-        {                                                     \
-            static std::string __params = #P;                 \
-            boost::replace_all(__params, ";", ";\n");         \
-            boost::replace_all(__params, "{", "{\n");         \
-            Stream << "Parameters:" << __params << std::endl; \
-        }                                                     \
-    };                                                        \
-    P;                                                        \
-    static Ps__ ____p;
-
 #endif // KERNEL_LIB_TOOLS_MACROS_HPP
