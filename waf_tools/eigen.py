@@ -2,22 +2,25 @@
 # encoding: utf-8
 
 from waflib.Configure import conf
+from waflib.Tools.fc_config import detect_openmp
 
 
 def options(opt):
-    opt.add_option("--eigen", type="string",
-                   help="path to eigen", dest="eigen")
-    # to-do: rename this to --eigen_lapacke
+    opt.add_option("--eigen", type="string", help="path to eigen", dest="eigen")
+    opt.add_option("--with-lapack", action="store", help="enable LAPACK", dest="lapack")
+    opt.add_option("--with-blas", action="store", help="enable OpenBLAS", dest="blas")
+    opt.add_option("--with-mkl", action="store", help="enable MKL", dest="mkl")
     opt.add_option(
-        "--lapacke_blas",
-        action="store_true",
-        help="enable lapacke/blas if found (required Eigen>=3.3)",
-        dest="lapacke_blas",
+        "--multi-threading", action="store", help="enable OpenMP", dest="openmp"
     )
 
 
 @conf
-def check_eigen(ctx, **kwargs):
+def check_eigen(ctx, mandatory=True):
+    # Check eigen option
+    if ctx.options.eigen:
+        includes_check = [ctx.options.eigen]
+
     def get_directory(filename, dirs):
         res = ctx.find_file(filename, dirs)
         return res[: -len(filename) - 1]
@@ -29,13 +32,8 @@ def check_eigen(ctx, **kwargs):
         "/usr/include",
     ]
 
-    required = kwargs.get("required", False)
-
     # OSX/Mac uses .dylib and GNU/Linux .so
     suffix = "dylib" if ctx.env["DEST_OS"] == "darwin" else "so"
-
-    if ctx.options.eigen:
-        includes_check = [ctx.options.eigen]
 
     try:
         ctx.start_msg("Checking for Eigen")
@@ -48,8 +46,7 @@ def check_eigen(ctx, **kwargs):
             major_version = -1
             minor_version = -1
 
-            config_file = ctx.find_file(
-                "Eigen/src/Core/util/Macros.h", includes_check)
+            config_file = ctx.find_file("Eigen/src/Core/util/Macros.h", includes_check)
             with open(config_file) as f:
                 config_content = f.readlines()
             for line in config_content:
@@ -77,8 +74,7 @@ def check_eigen(ctx, **kwargs):
                 blas_path = ""
                 for b in blas_libs:
                     try:
-                        blas_path = get_directory(
-                            "lib" + b + "." + suffix, extra_libs)
+                        blas_path = get_directory("lib" + b + "." + suffix, extra_libs)
                     except:
                         continue
                     blas_lib = b
@@ -87,8 +83,7 @@ def check_eigen(ctx, **kwargs):
                 lapacke = False
                 lapacke_path = ""
                 try:
-                    lapacke_path = get_directory(
-                        "liblapacke." + suffix, extra_libs)
+                    lapacke_path = get_directory("liblapacke." + suffix, extra_libs)
                     lapacke = True
                 except:
                     lapacke = False
@@ -100,11 +95,9 @@ def check_eigen(ctx, **kwargs):
                     else:
                         ctx.env.LIBPATH_EIGEN = [lapacke_path]
                     ctx.env.LIB_EIGEN = []
-                    ctx.end_msg("LAPACKE: '%s', BLAS: '%s'" %
-                                (lapacke_path, blas_path))
+                    ctx.end_msg("LAPACKE: '%s', BLAS: '%s'" % (lapacke_path, blas_path))
                 elif lapacke:
-                    ctx.end_msg("Found only LAPACKE: %s" %
-                                lapacke_path, "YELLOW")
+                    ctx.end_msg("Found only LAPACKE: %s" % lapacke_path, "YELLOW")
                 elif blas_lib != "":
                     ctx.end_msg("Found only BLAS: %s" % blas_path, "YELLOW")
                 else:
