@@ -15,6 +15,11 @@ def options(opt):
     # Load modules necessary in the configuration function
     opt.load("compiler_cxx")
     opt.load("compiler_c")
+
+    # Load flags options
+    opt.load("flags", tooldir="waf_tools")
+
+    # Load tools options
     opt.load("eigen", tooldir="waf_tools")
 
     # Add options
@@ -27,101 +32,71 @@ def options(opt):
 
 
 def configure(cfg):
-    # Load modules defined in the option function
+    # OSX/Mac uses .dylib and GNU/Linux .so
+    cfg.env.SUFFIX = "dylib" if cfg.env["DEST_OS"] == "darwin" else "so"
+
+    # Load compiler configuration
     cfg.load("compiler_cxx")
     cfg.load("compiler_c")
-    cfg.load("eigen")
-    cfg.load("tbb")
-    cfg.load("mkl")
-    cfg.load("avx")
 
-    # Don't know... define some kind of lib type (check this)
-    cfg.env["lib_type"] = "cxxstlib"
-    if cfg.options.shared:
-        cfg.env["lib_type"] = "cxxshlib"
+    # Load compiler flags
+    cfg.load("flags", tooldir="waf_tools")
 
-    # Magical flags definition for different compilers from Konst... hard to say what eachone does
-    if cfg.env.CXX_NAME in ["icc", "icpc"]:
-        common_flags = "-Wall -std=c++14"
-        opt_flags = " -O3 -xHost -mtune=native -unroll -g"
-    elif cfg.env.CXX_NAME in ["clang"]:
-        common_flags = "-Wall -std=c++14"
-        opt_flags = " -O3 -march=native -g -faligned-new"
+    # Load tools configuration
+    cfg.load("eigen", tooldir="waf_tools")
+
+    # Set lib type
+    if cfg.options.static:
+        cfg.env["lib_type"] = "cxxstlib"
     else:
-        gcc_version = int(cfg.env["CC_VERSION"][0] + cfg.env["CC_VERSION"][1])
-        if gcc_version < 47:
-            common_flags = "-Wall -std=c++0x"
-            # cfg.fatal("Compiler should support C++14")
-        else:
-            common_flags = "-Wall -std=c++14"
-        opt_flags = " -O3 -march=native -g"
-        if gcc_version >= 71:
-            opt_flags = opt_flags + " -faligned-new"
-
-    all_flags = common_flags + opt_flags
-    cfg.env["CXXFLAGS"] = cfg.env["CXXFLAGS"] + all_flags.split(" ")
-    print(cfg.env["CXXFLAGS"])
+        cfg.env["lib_type"] = "cxxshlib"
 
 
 def build(bld):
-    # OSX/Mac uses .dylib and GNU/Linux .so
-    suffix = "dylib" if bld.env["DEST_OS"] == "darwin" else "so"
+    # Library name
+    bld.get_env()["libname"] = "kernelLib"
 
-    # Define necessary libraries
-    libs = "BOOST EIGEN "
+    # Includes
+    includes = []
+    includes_path = "src"
+    for root, dirnames, filenames in os.walk(bld.path.abspath() + includes_path):
+        for filename in fnmatch.filter(filenames, "*.hpp"):
+            includes.append(os.path.join(root, filename))
+    includes = [f[len(bld.path.abspath()) + 1:] for f in includes]
 
-    # Get flags
-    cxxflags = bld.get_env()["CXXFLAGS"]
-
-    # Define needed libraries
-    libname = "kernelLib"
-    bld.get_env()["kernel_lib_libname"] = libname
-    bld.get_env()["kernel_lib_libs"] = libs
-
-    # Check if all the libraries have been loaded correctly
-    if len(bld.env.INCLUDES_EIGEN) == 0:
-        bld.fatal("Some libraries were not found! Cannot proceed!")
-
-    # Define sources files
-    files = []
-    for root, dirnames, filenames in os.walk(bld.path.abspath() + "/src/kernel_lib/"):
+    # Sources
+    sources = []
+    sources_path = "src/kernel_lib"
+    for root, dirnames, filenames in os.walk(bld.path.abspath() + sources_path):
         for filename in fnmatch.filter(filenames, "*.cpp"):
-            files.append(os.path.join(root, filename))
-
-    files = [f[len(bld.path.abspath()) + 1:] for f in files]
-    kernel_lib_srcs = " ".join(files)
+            sources.append(os.path.join(root, filename))
+    sources = " ".join([f[len(bld.path.abspath()) + 1:] for f in sources])
 
     # Build library
-    if bld.options.shared:
-        bld.shlib(
-            features="cxx " + bld.env["lib_type"],
-            source=kernel_lib_srcs,
-            target=libname,
-            includes="./src",
-            uselib=libs,
-            cxxxflags=cxxflags,
-        )
-    else:
+    if bld.options.static:
         bld.stlib(
             features="cxx " + bld.env["lib_type"],
-            source=kernel_lib_srcs,
-            target=libname,
-            includes="./src",
-            uselib=libs,
-            cxxxflags=cxxflags,
+            source=sources,
+            target=bld.get_env()["libname"],
+            includes=includes_path,
+            uselib=bld.get_env()["libs"],
+            cxxxflags=bld.get_env()["CXXFLAGS"],
+        )
+    else:
+        bld.shlib(
+            features="cxx " + bld.env["lib_type"],
+            source=sources,
+            target=bld.get_env()["libname"],
+            includes=includes_path,
+            uselib=bld.get_env()["libs"],
+            cxxxflags=bld.get_env()["CXXFLAGS"],
         )
 
+    # Build examples
     bld.recurse("./src/examples")
 
-    # Define headers to install
-    install_files = []
-    for root, dirnames, filenames in os.walk(bld.path.abspath() + "/src/"):
-        for filename in fnmatch.filter(filenames, "*.hpp"):
-            install_files.append(os.path.join(root, filename))
-    install_files = [f[len(bld.path.abspath()) + 1:] for f in install_files]
-
     # Install headers
-    for f in install_files:
+    for f in includes:
         end_index = f.rfind("/")
         if end_index == -1:
             end_index = len(f)
@@ -129,6 +104,11 @@ def build(bld):
 
     # Install libraries
     if bld.env["lib_type"] == "cxxstlib":
-        bld.install_files("${PREFIX}/lib", blddir + "/kernel_lib.a")
+        bld.install_files(
+            "${PREFIX}/lib", blddir + "/lib" + bld.get_env()["libname"] + ".a"
+        )
     else:
-        bld.install_files("${PREFIX}/lib", blddir + "/kernel_lib." + suffix)
+        bld.install_files(
+            "${PREFIX}/lib",
+            blddir + "/lib" + bld.get_env()["libname"] + "." + bld.env.SUFFIX,
+        )

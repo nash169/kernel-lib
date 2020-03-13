@@ -2,130 +2,71 @@
 # encoding: utf-8
 
 from waflib.Configure import conf
-from waflib.Tools.fc_config import detect_openmp
+from utils import check_include
 
 
 def options(opt):
-    opt.add_option("--eigen", type="string", help="path to eigen", dest="eigen")
-    opt.add_option("--with-lapack", action="store", help="enable LAPACK", dest="lapack")
-    opt.add_option("--with-blas", action="store", help="enable OpenBLAS", dest="blas")
-    opt.add_option("--with-mkl", action="store", help="enable MKL", dest="mkl")
     opt.add_option(
-        "--multi-threading", action="store", help="enable OpenMP", dest="openmp"
+        "--eigen-path", type="string", help="path to eigen", dest="eigen_path"
     )
+    opt.add_option(
+        "--with-lapack", action="store_true", help="enable LAPACK", dest="eigen_lapack"
+    )
+    opt.add_option(
+        "--with-blas", action="store_true", help="enable OpenBLAS", dest="eigen_blas"
+    )
+    opt.add_option(
+        "--with-mkl", action="store_true", help="enable MKL", dest="eigen_mkl"
+    )
+    opt.add_option(
+        "--multi-threading",
+        action="store_true",
+        help="enable OpenMP",
+        dest="eigen_openmp",
+    )
+
+    opt.load("lapack", tooldir="waf_tools")
+    opt.load("blas", tooldir="waf_tools")
+    opt.load("mkl", tooldir="waf_tools")
 
 
 @conf
-def check_eigen(ctx, mandatory=True):
-    # Check eigen option
-    if ctx.options.eigen:
-        includes_check = [ctx.options.eigen]
+def check_eigen(ctx):
+    # Set the search path
+    if ctx.options.eigen_path is None:
+        path_check = ["/usr/local", "/usr", "/opt"]
+    else:
+        path_check = ctx.options.eigen_path
 
-    def get_directory(filename, dirs):
-        res = ctx.find_file(filename, dirs)
-        return res[: -len(filename) - 1]
+    # EIGEN includes
+    check_include(ctx, "EIGEN", "eigen3", ["Eigen/Core"], path_check)
 
-    includes_check = [
-        "/usr/local/include",
-        "/usr/local/include/eigen3",
-        "/usr/include/eigen3",
-        "/usr/include",
-    ]
+    # Add EIGEN
+    if ctx.env.INCLUDES_EIGEN:
+        if not ctx.get_env()["libs"]:
+            ctx.get_env()["libs"] = "EIGEN "
+        else:
+            ctx.get_env()["libs"] = ctx.get_env()["libs"] + "EIGEN "
 
-    # OSX/Mac uses .dylib and GNU/Linux .so
-    suffix = "dylib" if ctx.env["DEST_OS"] == "darwin" else "so"
+        if ctx.options.eigen_lapack:
+            ctx.get_env()["requires"] = ctx.get_env()["requires"] + ["LAPACK"]
+            ctx.load("lapack", tooldir="waf_tools")
+            ctx.env.DEFINES_EIGEN.append("EIGEN_USE_LAPACKE")
 
-    try:
-        ctx.start_msg("Checking for Eigen")
-        incl = get_directory("Eigen/Core", includes_check)
-        ctx.env.INCLUDES_EIGEN = [incl]
-        ctx.end_msg(incl)
-        if ctx.options.lapacke_blas:
-            ctx.start_msg("Checking for LAPACKE/BLAS (optional)")
-            world_version = -1
-            major_version = -1
-            minor_version = -1
+        if ctx.options.eigen_blas:
+            ctx.get_env()["requires"] = ctx.get_env()["requires"] + ["BLAS"]
+            ctx.load("blas", tooldir="waf_tools")
+            ctx.env.DEFINES_EIGEN.append("EIGEN_USE_BLAS")
 
-            config_file = ctx.find_file("Eigen/src/Core/util/Macros.h", includes_check)
-            with open(config_file) as f:
-                config_content = f.readlines()
-            for line in config_content:
-                world = line.find("#define EIGEN_WORLD_VERSION")
-                major = line.find("#define EIGEN_MAJOR_VERSION")
-                minor = line.find("#define EIGEN_MINOR_VERSION")
-                if world > -1:
-                    world_version = int(line.split(" ")[-1].strip())
-                if major > -1:
-                    major_version = int(line.split(" ")[-1].strip())
-                if minor > -1:
-                    minor_version = int(line.split(" ")[-1].strip())
-                if world_version > 0 and major_version > 0 and minor_version > 0:
-                    break
+        if ctx.options.eigen_mkl:
+            ctx.get_env()["requires"] = ctx.get_env()["requires"] + ["MKL"]
+            ctx.load("mkl", tooldir="waf_tools")
+            ctx.env.DEFINES_EIGEN.append("EIGEN_USE_MKL_VML")
 
-            if world_version == 3 and major_version >= 3:
-                # Check for lapacke and blas
-                extra_libs = [
-                    "/usr/lib",
-                    "/usr/local/lib",
-                    "/usr/local/opt/openblas/lib",
-                ]
-                blas_libs = ["blas", "openblas"]
-                blas_lib = ""
-                blas_path = ""
-                for b in blas_libs:
-                    try:
-                        blas_path = get_directory("lib" + b + "." + suffix, extra_libs)
-                    except:
-                        continue
-                    blas_lib = b
-                    break
-
-                lapacke = False
-                lapacke_path = ""
-                try:
-                    lapacke_path = get_directory("liblapacke." + suffix, extra_libs)
-                    lapacke = True
-                except:
-                    lapacke = False
-
-                if lapacke or blas_lib != "":
-                    ctx.env.DEFINES_EIGEN = []
-                    if lapacke_path != blas_path:
-                        ctx.env.LIBPATH_EIGEN = [lapacke_path, blas_path]
-                    else:
-                        ctx.env.LIBPATH_EIGEN = [lapacke_path]
-                    ctx.env.LIB_EIGEN = []
-                    ctx.end_msg("LAPACKE: '%s', BLAS: '%s'" % (lapacke_path, blas_path))
-                elif lapacke:
-                    ctx.end_msg("Found only LAPACKE: %s" % lapacke_path, "YELLOW")
-                elif blas_lib != "":
-                    ctx.end_msg("Found only BLAS: %s" % blas_path, "YELLOW")
-                else:
-                    ctx.end_msg("Not found in %s" % str(extra_libs), "RED")
-                if lapacke:
-                    ctx.env.DEFINES_EIGEN.append("EIGEN_USE_LAPACKE")
-                    ctx.env.LIB_EIGEN.append("lapacke")
-                if blas_lib != "":
-                    ctx.env.DEFINES_EIGEN.append("EIGEN_USE_BLAS")
-                    ctx.env.LIB_EIGEN.append(blas_lib)
-            else:
-                ctx.end_msg(
-                    "Found Eigen version %s: LAPACKE/BLAS can be used only with Eigen>=3.3"
-                    % (
-                        str(world_version)
-                        + "."
-                        + str(major_version)
-                        + "."
-                        + str(minor_version)
-                    ),
-                    "RED",
-                )
-    except:
-        if required:
-            ctx.fatal("Not found in %s" % str(includes_check))
-        ctx.end_msg("Not found in %s" % str(includes_check), "RED")
+        if ctx.options.eigen_openmp and ctx.options.eigen_mkl is None:
+            ctx.load("openmp", tooldir="waf_tools")
 
 
 def configure(cfg):
-    # Configuration
-    cfg.check_eigen(required=True)
+    if not cfg.env.INCLUDES_EIGEN:
+        cfg.check_eigen()
