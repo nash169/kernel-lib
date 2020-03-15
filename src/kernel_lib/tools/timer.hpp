@@ -26,8 +26,9 @@ namespace kernel_lib {
 
                 auto duration = end - start;
                 double ms = duration * 0.001;
+                double s = ms * 0.001;
 
-                std::cout << duration << "us (" << ms << "ms)" << std::endl;
+                std::cout << duration << "us (" << ms << "ms)" << " - (" << s << "s)" << std::endl;
             }
 
         private:

@@ -13,7 +13,7 @@ struct Params {
 
 int main(int argc, char const* argv[])
 {
-    int dim = 2, num_points = 5000;
+    int dim = 2, num_points = 15000;
 
     Eigen::MatrixXd x = Eigen::MatrixXd::Random(num_points, dim);
 
