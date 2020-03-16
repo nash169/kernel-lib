@@ -15,7 +15,6 @@ blddir = "build"
 def options(opt):
     # Load modules necessary in the configuration function
     opt.load("compiler_cxx")
-    opt.load("compiler_c")
 
     # Load flags options
     opt.load("flags", tooldir="waf_tools")
@@ -34,7 +33,6 @@ def configure(cfg):
 
     # Load compiler configuration
     cfg.load("compiler_cxx")
-    cfg.load("compiler_c")
 
     # Load compiler flags
     cfg.load("flags", tooldir="waf_tools")
