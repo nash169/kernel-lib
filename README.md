@@ -82,7 +82,7 @@ Set MKL multi-threading
 ```sh
 waf (./waf) configure --mkl-threading=<sequential|openmp|tbb>
 ```
-By default MKL uses `sequential` option. If you activate `openmp` this includes `--multi-threading` that will be deactivated in this case. In addition if choose OpenMP multi-threading you select between the GNU, `gnu`, or Intel, `intel`, version through `--mkl-openmp` option. 
+By default MKL uses `sequential` option. If you activate `openmp` this includes `--multi-threading` that will be deactivated in this case. In addition if you choose OpenMP multi-threading it is possible select between the GNU (default), `gnu`, or Intel, `intel`, version through `--mkl-openmp` option. 
 Suggested configuration
 ```sh
 waf (./waf) configure --optional-flags --with-lapack --with-blas --with-mkl --mkl-threading=tbb
