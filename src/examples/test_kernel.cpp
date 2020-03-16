@@ -1,3 +1,4 @@
+#include <iostream>
 #include <kernel_lib/rbf.hpp>
 #include <kernel_lib/tools/timer.hpp>
 
@@ -23,6 +24,8 @@ int main(int argc, char const* argv[])
         tools::Timer timer;
         k(x, x);
     }
+
+    // std::cout << k(x, x) << std::endl;
 
     return 0;
 }

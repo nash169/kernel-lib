@@ -3,7 +3,7 @@
 
 #include "kernel_lib/tools/macros.hpp"
 #include "kernel_lib/tools/math.hpp"
-#include <Eigen/Core>
+#include <Eigen/Dense>
 
 namespace kernel_lib {
     namespace defaults {

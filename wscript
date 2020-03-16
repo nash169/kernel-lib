@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import os
+import os.path as osp
 import fnmatch
 
 VERSION = "1.0.0"
@@ -23,12 +24,8 @@ def options(opt):
     opt.load("eigen", tooldir="waf_tools")
 
     # Add options
-    opt.add_option("--shared", action="store_true",
-                   help="build shared library")
-    opt.add_option("--static", action="store_true",
-                   help="build static library")
-    opt.add_option("--no-avx", action="store_true",
-                   help="build without AVX flags", dest="disable_avx",)
+    opt.add_option("--shared", action="store_true", help="build shared library")
+    opt.add_option("--static", action="store_true", help="build static library")
 
 
 def configure(cfg):
@@ -45,11 +42,14 @@ def configure(cfg):
     # Load tools configuration
     cfg.load("eigen", tooldir="waf_tools")
 
+    # Remove duplicates
+    cfg.get_env()["libs"] = list(set(cfg.get_env()["libs"]))
+
     # Set lib type
-    if cfg.options.static:
-        cfg.env["lib_type"] = "cxxstlib"
-    else:
+    if cfg.options.shared:
         cfg.env["lib_type"] = "cxxshlib"
+    else:
+        cfg.env["lib_type"] = "cxxstlib"
 
 
 def build(bld):
@@ -59,22 +59,26 @@ def build(bld):
     # Includes
     includes = []
     includes_path = "src"
-    for root, dirnames, filenames in os.walk(bld.path.abspath() + includes_path):
+    for root, dirnames, filenames in os.walk(
+        osp.join(bld.path.abspath(), includes_path)
+    ):
         for filename in fnmatch.filter(filenames, "*.hpp"):
             includes.append(os.path.join(root, filename))
-    includes = [f[len(bld.path.abspath()) + 1:] for f in includes]
+    includes = [f[len(bld.path.abspath()) + 1 :] for f in includes]
 
     # Sources
     sources = []
     sources_path = "src/kernel_lib"
-    for root, dirnames, filenames in os.walk(bld.path.abspath() + sources_path):
+    for root, dirnames, filenames in os.walk(
+        osp.join(bld.path.abspath(), sources_path)
+    ):
         for filename in fnmatch.filter(filenames, "*.cpp"):
             sources.append(os.path.join(root, filename))
-    sources = " ".join([f[len(bld.path.abspath()) + 1:] for f in sources])
+    sources = " ".join([f[len(bld.path.abspath()) + 1 :] for f in sources])
 
     # Build library
-    if bld.options.static:
-        bld.stlib(
+    if bld.options.shared:
+        bld.shlib(
             features="cxx " + bld.env["lib_type"],
             source=sources,
             target=bld.get_env()["libname"],
@@ -83,7 +87,7 @@ def build(bld):
             cxxxflags=bld.get_env()["CXXFLAGS"],
         )
     else:
-        bld.shlib(
+        bld.stlib(
             features="cxx " + bld.env["lib_type"],
             source=sources,
             target=bld.get_env()["libname"],
