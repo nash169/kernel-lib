@@ -40,8 +40,7 @@ waf (./waf) configure build
 ```
 or
 ```sh
-waf (./waf) configure
-waf (./waf)
+waf (./waf) configure && waf (./waf)
 ```
 Install the library (optional)
 ```sh
