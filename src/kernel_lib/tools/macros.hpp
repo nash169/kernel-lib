@@ -5,23 +5,24 @@
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 
-#define BO_PARAM(Type, Name, Value) \
+#define PARAM_SCALAR(Type, Name, Value) \
     static constexpr Type Name() { return Value; }
 
-#define BO_REQUIRED_PARAM(Type, Name)                                         \
+#define REQUIRED_PARAM(Type, Name)                                            \
     static const Type Name()                                                  \
     {                                                                         \
         static_assert(false, "You need to define the parameter:" #Name " !"); \
         return Type();                                                        \
     }
 
-#define BO_DYN_PARAM(Type, Name)           \
+#define DYN_PARAM(Type, Name)              \
     static Type _##Name;                   \
     static Type Name() { return _##Name; } \
     static void set_##Name(const Type& v) { _##Name = v; }
 
-#define BO_DECLARE_DYN_PARAM(Type, Namespace, Name) Type Namespace::_##Name;
+#define DECLARE_DYN_PARAM(Type, Namespace, Name) Type Namespace::_##Name;
 
+// Macro implementation for counting the arguments in variadic macros
 #define __VA_NARG__(...) (__VA_NARG_(_0, ##__VA_ARGS__, __RSEQ_N()) - 1)
 #define __VA_NARG_(...) __VA_ARG_N(__VA_ARGS__)
 #define __VA_ARG_N(                                   \
@@ -41,7 +42,8 @@
         19, 18, 17, 16, 15, 14, 13, 12, 11, 10, \
         9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 
-#define BO_PARAM_ARRAY(Type, Name, ...)                  \
+// Create array
+#define PARAM_ARRAY(Type, Name, ...)                     \
     static Type Name(size_t i)                           \
     {                                                    \
         assert(i < __VA_NARG__(__VA_ARGS__));            \
@@ -54,14 +56,15 @@
     }                                                    \
     using Name##_t = Type;
 
-#define BO_PARAM_VECTOR(Type, Name, ...)                                                    \
+// Create Eigen vector
+#define PARAM_VECTOR(Type, Name, ...)                                                       \
     static const Eigen::Matrix<Type, __VA_NARG__(__VA_ARGS__), 1> Name()                    \
     {                                                                                       \
         static constexpr Type _##Name[] = {__VA_ARGS__};                                    \
         return Eigen::Map<const Eigen::Matrix<Type, __VA_NARG__(__VA_ARGS__), 1>>(_##Name); \
     }
 
-#define BO_PARAM_STRING(Name, Value) \
+#define PARAM_STRING(Name, Value) \
     static constexpr const char* Name() { return Value; }
 
 #endif // KERNEL_LIB_TOOLS_MACROS_HPP

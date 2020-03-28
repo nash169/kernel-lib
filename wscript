@@ -16,11 +16,8 @@ def options(opt):
     # Load modules necessary in the configuration function
     opt.load("compiler_cxx")
 
-    # Load flags options
-    opt.load("flags", tooldir="waf_tools")
-
     # Load tools options
-    opt.load("eigen", tooldir="waf_tools")
+    opt.load("flags eigen corrade", tooldir="waf_tools")
 
     # Add options
     opt.add_option("--shared", action="store_true", help="build shared library")
@@ -34,11 +31,8 @@ def configure(cfg):
     # Load compiler configuration
     cfg.load("compiler_cxx")
 
-    # Load compiler flags
-    cfg.load("flags", tooldir="waf_tools")
-
     # Load tools configuration
-    cfg.load("eigen", tooldir="waf_tools")
+    cfg.load("flags eigen corrade", tooldir="waf_tools")
 
     # Remove duplicates
     cfg.get_env()["libs"] = list(set(cfg.get_env()["libs"]))
@@ -91,6 +85,7 @@ def build(bld):
             target=bld.get_env()["libname"],
             includes=includes_path,
             uselib=bld.get_env()["libs"],
+            use="BOOST",
             cxxxflags=bld.get_env()["CXXFLAGS"],
         )
 
