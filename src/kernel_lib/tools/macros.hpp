@@ -15,6 +15,12 @@
         return Type();                                                        \
     }
 
+#define REQUIRED_DIMENSION(condition, message) \
+    if (!(condition)) {                        \
+        std::cerr << message << std::endl;     \
+        std::abort();                          \
+    }
+
 #define DYN_PARAM(Type, Name)              \
     static Type _##Name;                   \
     static Type Name() { return _##Name; } \

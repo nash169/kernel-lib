@@ -34,7 +34,7 @@ def get_data(file_path, var):
 
 
 rsc_path = os.path.join(os.getcwd(), "../../../rsc")
-file_path = os.path.join(rsc_path, "hello.csv")
+file_path = os.path.join(rsc_path, "eval_data.csv")
 
 X = get_data(file_path, "X")
 Y = get_data(file_path, "Y")
@@ -42,7 +42,9 @@ F = get_data(file_path, "F")
 
 fig = plt.figure()
 ax = fig.add_subplot(121, projection="3d")
-ax.plot_surface(X, Y, F, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+surf = ax.plot_surface(X, Y, F, cmap=cm.Spectral, linewidth=0, antialiased=False)
+fig.colorbar(surf, ax=ax)
 ax = fig.add_subplot(122)
-ax.contourf(X, Y, F)
-
+contour = ax.contourf(X, Y, F, cmap=cm.Spectral)
+ax.set_aspect("equal", "box")
+fig.colorbar(contour, ax=ax)

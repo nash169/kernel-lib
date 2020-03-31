@@ -1,9 +1,7 @@
 #ifndef KERNEL_LIB_KERNEL_HPP
 #define KERNEL_LIB_KERNEL_HPP
 
-#include "kernel_lib/tools/Timer.hpp"
 #include "kernel_lib/tools/macros.hpp"
-#include "kernel_lib/tools/math.hpp"
 #include <Eigen/Dense>
 
 namespace kernel_lib {
@@ -17,9 +15,9 @@ namespace kernel_lib {
     template <typename Params, typename Kernel>
     class AbstractKernel {
     public:
-        AbstractKernel(size_t dim = 1) : sigma_f_(Params::kernel::sigma_f())
+        AbstractKernel(size_t dim = 1) : _sigma_f(Params::kernel::sigma_f())
         {
-            sigma_n_ = (Params::kernel::sigma_n() == 0) ? 1e-8 : Params::kernel::sigma_n();
+            _sigma_n = (Params::kernel::sigma_n() == 0) ? 1e-8 : Params::kernel::sigma_n();
         }
 
         Eigen::VectorXd operator()() const
@@ -36,22 +34,22 @@ namespace kernel_lib {
 
         void set_data(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
         {
-            n_features_ = x.cols();
-            assert(n_features_ == y.cols());
+            _n_features = x.cols();
+            REQUIRED_DIMENSION(_n_features == y.cols(), "Y must have the same dimension of X")
 
-            x_samples_ = x.rows();
-            y_samples_ = y.rows();
+            _x_samples = x.rows();
+            _y_samples = y.rows();
 
-            x_ = x;
-            y_ = y;
+            _x = x;
+            _y = y;
         }
 
     protected:
-        int n_features_, x_samples_, y_samples_;
+        size_t _n_features, _x_samples, _y_samples;
 
-        double sigma_f_, sigma_n_;
+        double _sigma_f, _sigma_n;
 
-        Eigen::MatrixXd x_, y_;
+        Eigen::MatrixXd _x, _y;
     };
 
 } // namespace kernel_lib
