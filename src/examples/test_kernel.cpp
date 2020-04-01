@@ -5,6 +5,7 @@
 
 #include <kernel_lib/tools/FileManager.hpp>
 #include <kernel_lib/tools/Timer.hpp>
+#include <kernel_lib/tools/math.hpp>
 
 using namespace kernel_lib;
 
@@ -35,6 +36,16 @@ int main(int argc, char const* argv[])
 
     x_train << 25, 25,
         75, 75;
+
+    // Create covariance matrix
+    Eigen::VectorXd var(2);
+    var << 2, 5;
+    Eigen::MatrixXd V(1, 2), U = tools::gs_orthogonalize(V), D = Eigen::MatrixXd::Zero(2, 2), S;
+    V << 1, 1;
+    // QR factorization is another thing that sensibly slows down the compilation for some reason (LLT factorization the other one)
+    for (size_t i = 0; i < var.rows(); i++)
+        D(i, i) = std::pow(var(i), 2); // 1/std::pow(S(i),2); for constructing the inverse of the covariance matrix
+    S = U * D * U.transpose(); // U.transpose() * D * U; for the inverse
 
     // the type of the GP
     using Kernel_t = kernel::Rbf<Params>;

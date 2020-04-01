@@ -87,3 +87,4 @@ Suggested configuration
 ```sh
 waf (./waf) configure --optional-flags --with-lapack --with-blas --with-mkl --mkl-threading=tbb
 ```
+In order to set the desired compiler define the environment variable CXX=<g++,clang++,icpc> (gnu, clang and intel compiler respectively).
