@@ -92,8 +92,7 @@ namespace kernel_lib {
 
                         for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
                             for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                                const Eigen::VectorXd& v = Kernel_t::_x.row(i) - Kernel_t::_y.row(j);
-                                log_k(index) = L.solve(v).squaredNorm() * -0.5;
+                                log_k(index) = L.solve((Kernel_t::_x.row(i) - Kernel_t::_y.row(j)).transpose()).squaredNorm() * -0.5;
                                 index++;
                             }
                         }
