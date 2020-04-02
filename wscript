@@ -89,8 +89,10 @@ def build(bld):
             cxxxflags=bld.get_env()["CXXFLAGS"],
         )
 
-    # Build examples
+    # Build executables
     bld.recurse("./src/examples")
+    bld.recurse("./src/tests")
+    bld.recurse("./src/benchmarks")
 
     # Install headers
     for f in includes:

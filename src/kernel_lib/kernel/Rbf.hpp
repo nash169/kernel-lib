@@ -34,7 +34,7 @@ namespace kernel_lib {
             using Kernel_t = AbstractKernel<Params, Rbf<Params>>;
 
         public:
-            Rbf() : _sigma(Params::kernel_rbf::sigma()), _type(Params::kernel_rbf::type())
+            Rbf() : _sigma(Params::kernel_rbf::sigma()), _type(Params::kernel_rbf::type()), _inverse(Params::kernel_rbf::inverse())
             {
             }
 
@@ -76,24 +76,26 @@ namespace kernel_lib {
                     REQUIRED_DIMENSION(_sigma.rows() == std::pow(Kernel_t::_n_features, 2), "Sigma requires dimension equal to squared number of features")
 
                     if (_inverse) {
-                        Eigen::MatrixXd sig = _sigma.reshaped(Kernel_t::_n_features, Kernel_t::_n_features) * -0.5;
+                        const Eigen::MatrixXd& sig = _sigma.reshaped(Kernel_t::_n_features, Kernel_t::_n_features) * -0.5;
+
                         for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
                             for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                                Eigen::VectorXd v = (Kernel_t::_x.row(i) - Kernel_t::_x.row(j));
+                                const Eigen::VectorXd& v = Kernel_t::_x.row(i) - Kernel_t::_y.row(j);
                                 log_k(index) = v.transpose() * sig * v;
                                 index++;
                             }
                         }
                     }
                     else {
-                        // Chol::Traits::MatrixL L = cholesky();
+                        // Why this? const and reference?
+                        const Chol::Traits::MatrixL& L = cholesky(_sigma.reshaped(Kernel_t::_n_features, Kernel_t::_n_features));
 
-                        // for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
-                        //     for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                        //         log_k(index) = L.solve(Kernel_t::_x.row(i) - Kernel_t::_x.row(j)).squaredNorm() * -0.5;
-                        //         index++;
-                        //     }
-                        // }
+                        for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
+                            for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
+                                log_k(index) = L.solve((Kernel_t::_x.row(0) - Kernel_t::_y.row(0)).transpose()).squaredNorm() * -0.5;
+                                index++;
+                            }
+                        }
                     }
                 }
 
@@ -110,9 +112,9 @@ namespace kernel_lib {
             // Code from limbo to calculate the cholesky (check if optimized)
             // also check if it is ok returning inside the is statement
             // with this thing compilation time gets super long why?
-            Chol::Traits::MatrixL cholesky() const
+            Chol::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma) const
             {
-                Chol chol(_sigma);
+                Chol chol(sigma);
 
                 if (chol.info() != Eigen::Success) {
                     // There was an error; probably the matrix is not SPD

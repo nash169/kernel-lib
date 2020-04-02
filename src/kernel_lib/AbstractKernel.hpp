@@ -2,7 +2,7 @@
 #define KERNEL_LIB_KERNEL_HPP
 
 #include "kernel_lib/tools/macros.hpp"
-#include <Eigen/Dense>
+#include <Eigen/Dense> // use Eigen/Dense for now, then it'd be better to specialize headers
 
 namespace kernel_lib {
     namespace defaults {
