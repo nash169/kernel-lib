@@ -15,8 +15,8 @@ struct Params {
     };
     struct kernel_rbf : public defaults::kernel_rbf {
         PARAM_SCALAR(Covariance, type, CovarianceType::FULL);
-        PARAM_SCALAR(bool, inverse, true);
-        PARAM_VECTOR(double, sigma, 4, 0, 0, 25); // 0.25, 0, 0, 0.04
+        PARAM_SCALAR(bool, inverse, false);
+        PARAM_VECTOR(double, sigma, 14.5, -10.5, -10.5, 14.5); // 14.5, -10.5, -10.5, 14.5 -- 0.145, 0.105, 0.105, 0.145
     };
     struct expansion : public defaults::expansion {
         PARAM_VECTOR(double, weight, 1);
@@ -39,14 +39,15 @@ int main(int argc, char const* argv[])
     x_train << 25, 25;
 
     // Create covariance matrix
-    Eigen::VectorXd var(2);
-    var << 2, 5;
-    Eigen::MatrixXd V(1, 2), U = tools::gs_orthogonalize(V), D = Eigen::MatrixXd::Zero(2, 2), S;
+    Eigen::VectorXd std(2);
+    std << 2, 5;
+    Eigen::MatrixXd V(1, 2), D = Eigen::MatrixXd::Zero(2, 2), U, S;
     V << 1, 1;
+    U = tools::gs_orthogonalize(V);
     // QR factorization is another thing that sensibly slows down the compilation for some reason (LLT factorization the other one)
-    for (size_t i = 0; i < var.rows(); i++)
-        D(i, i) = 1 / std::pow(var(i), 2); //std::pow(var(i), 2); // 1/std::pow(var(i),2); for constructing the inverse of the covariance matrix
-    S = U.transpose() * D * U; //U * D * U.transpose(); // U.transpose() * D * U; for the inverse
+    for (size_t i = 0; i < std.rows(); i++)
+        D(i, i) = std::pow(std(i), 2); // 1/std::pow(std(i),2); for constructing the inverse of the covariance matrix
+    S = U * D * U.transpose(); // U.transpose() * D * U; for the inverse
 
     // the type of the GP
     using Kernel_t = kernel::Rbf<Params>;
