@@ -4,8 +4,6 @@
 #include "kernel_lib/AbstractKernel.hpp"
 #include <Corrade/Containers/EnumSet.h>
 
-using Chol = Eigen::LLT<Eigen::MatrixXd>;
-
 namespace kernel_lib {
     enum class CovarianceType : unsigned int {
         SPHERICAL = 1 << 0,
@@ -88,7 +86,7 @@ namespace kernel_lib {
                     }
                     else {
                         // Why this? const and reference?
-                        const Chol::Traits::MatrixL& L = cholesky(_sigma.reshaped(Kernel_t::_n_features, Kernel_t::_n_features));
+                        const Chol::Traits::MatrixL& L = tools::cholesky(_sigma.reshaped(Kernel_t::_n_features, Kernel_t::_n_features));
 
                         for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
                             for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
@@ -108,56 +106,6 @@ namespace kernel_lib {
             Covariance _type;
 
             bool _inverse;
-
-            // Code from limbo to calculate the cholesky (check if optimized)
-            // also check if it is ok returning inside the is statement
-            // with this thing compilation time gets super long why?
-            Chol::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma) const
-            {
-                Chol chol(sigma);
-
-                if (chol.info() != Eigen::Success) {
-                    // There was an error; probably the matrix is not SPD
-                    // Let's try to make it SPD and take cholesky of that
-                    // original MATLAB code: http://fr.mathworks.com/matlabcentral/fileexchange/42885-nearestspd
-                    // Note that at this point _L is not cholesky factor, but matrix to be factored
-
-                    // Symmetrize A into B
-                    Eigen::MatrixXd B = (_sigma.array() + _sigma.transpose().array()) / 2.;
-
-                    // Compute the symmetric polar factor of B. Call it H. Clearly H is itself SPD.
-                    Eigen::JacobiSVD<Eigen::MatrixXd> svd(B, Eigen::ComputeFullU | Eigen::ComputeFullV);
-                    Eigen::MatrixXd V, Sigma, H, L_hat;
-
-                    Sigma = Eigen::MatrixXd::Identity(B.rows(), B.cols());
-                    Sigma.diagonal() = svd.singularValues();
-                    V = svd.matrixV();
-
-                    H = V * Sigma * V.transpose();
-
-                    // Get candidate for closest SPD matrix to _sigma
-                    L_hat = (B.array() + H.array()) / 2.;
-
-                    // Ensure symmetry
-                    L_hat = (L_hat.array() + L_hat.array()) / 2.;
-
-                    // Test that L_hat is in fact PD. if it is not so, then tweak it just a bit.
-                    Eigen::LLT<Eigen::MatrixXd> llt_hat(L_hat);
-                    int k = 0;
-                    while (llt_hat.info() != Eigen::Success) {
-                        k++;
-                        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(L_hat);
-                        double min_eig = es.eigenvalues().minCoeff();
-                        L_hat.diagonal().array() += (-min_eig * k * k + 1e-50);
-                        llt_hat.compute(L_hat);
-                    }
-
-                    return llt_hat.matrixL();
-                }
-                else {
-                    return chol.matrixL();
-                }
-            }
         };
     } // namespace kernel
 } // namespace kernel_lib

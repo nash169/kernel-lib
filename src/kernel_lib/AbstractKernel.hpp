@@ -2,7 +2,7 @@
 #define KERNEL_LIB_KERNEL_HPP
 
 #include "kernel_lib/tools/macros.hpp"
-#include <Eigen/Dense> // use Eigen/Dense for now, then it'd be better to specialize headers
+#include "kernel_lib/tools/math.hpp"
 
 namespace kernel_lib {
     namespace defaults {
@@ -15,7 +15,7 @@ namespace kernel_lib {
     template <typename Params, typename Kernel>
     class AbstractKernel {
     public:
-        AbstractKernel(size_t dim = 1) : _sigma_f(Params::kernel::sigma_f())
+        AbstractKernel() : _sigma_f(Params::kernel::sigma_f())
         {
             _sigma_n = (Params::kernel::sigma_n() == 0) ? 1e-8 : Params::kernel::sigma_n();
         }
