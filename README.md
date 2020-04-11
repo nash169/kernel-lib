@@ -107,5 +107,5 @@ In order to set the desired compiler define the environment variable CXX=<g++,cl
 
 ### Plot
 ```sh
-python (python3) src/kernel_lib/plot/kernel_plot.py
+python (python3) rsc/kernel_plot.py
 ```
