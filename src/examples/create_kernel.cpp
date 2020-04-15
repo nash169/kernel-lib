@@ -1,34 +1,14 @@
 #include <iostream>
-
-#include <kernel_lib/Expansion.hpp>
-#include <kernel_lib/kernel/Rbf.hpp>
-
-#include <kernel_lib/tools/FileManager.hpp>
-#include <kernel_lib/tools/Timer.hpp>
-#include <kernel_lib/tools/math.hpp>
+#include <kernel_lib/Kernel.hpp>
 
 using namespace kernel_lib;
-
-struct Params {
-    struct kernel : public defaults::kernel {
-        PARAM_SCALAR(double, sigma_n, 1.0);
-    };
-    struct kernel_rbf : public defaults::kernel_rbf {
-        PARAM_SCALAR(Covariance, type, CovarianceType::FULL);
-        PARAM_SCALAR(bool, inverse, false);
-        PARAM_VECTOR(double, sigma, 14.5, -10.5, -10.5, 14.5); // 14.5, -10.5, -10.5, 14.5 -- 0.145, 0.105, 0.105, 0.145
-    };
-    struct expansion : public defaults::expansion {
-        PARAM_VECTOR(double, weight, 1);
-    };
-};
 
 int main(int argc, char const* argv[])
 {
     double box[] = {0, 100, 0, 100};
     size_t resolution = 100, num_samples = resolution * resolution, dim = sizeof(box) / sizeof(*box) / 2;
 
-    Eigen::MatrixXd X(resolution, resolution), Y(resolution, resolution), x_test(num_samples, dim), x_train(1, dim);
+    Eigen::MatrixXd X(resolution, resolution), Y(resolution, resolution), x_test(num_samples, dim), x_train(3, dim);
 
     X = Eigen::RowVectorXd::LinSpaced(resolution, box[0], box[1]).replicate(resolution, 1);
     Y = Eigen::VectorXd::LinSpaced(resolution, box[2], box[3]).replicate(1, resolution);
@@ -36,27 +16,23 @@ int main(int argc, char const* argv[])
     x_test.col(0) = X.reshaped();
     x_test.col(1) = Y.reshaped();
 
-    x_train << 25, 25;
+    x_train << 25, 50,
+        50, 50,
+        75, 50;
 
     // Create covariance matrix
-    Eigen::VectorXd std(2);
-    std << 2, 5;
-    Eigen::MatrixXd V(1, 2), D = Eigen::MatrixXd::Zero(2, 2), U, S;
-    V << 1, 1;
-    U = tools::gs_orthogonalize(V);
-    // QR factorization is another thing that sensibly slows down the compilation for some reason (LLT factorization the other one)
-    for (size_t i = 0; i < std.rows(); i++)
-        D(i, i) = std::pow(std(i), 2); // 1/std::pow(std(i),2); for constructing the inverse of the covariance matrix
-    S = U * D * U.transpose(); // U.transpose() * D * U; for the inverse
+    Eigen::VectorXd direction(2), standard_dev(2);
+    direction << 1, 1;
+    standard_dev << 2, 5;
+    Eigen::MatrixXd C = tools::createCovariance(direction, standard_dev);
 
-    // the type of the GP
-    using Kernel_t = kernel::Rbf<Params>;
-    using Expansion_t = Expansion<Params, Kernel_t>;
+    SumRbfSpherical psi1;
+    SumRbfDiagonal2 psi2;
+    SumRbfFull2 psi3;
 
     // Evaluate expansion for plotting
-    Expansion_t psi;
-    tools::FileManager file_to_write(join(current(), "rsc/eval_data.csv"), "w");
-    file_to_write.write("X", X, "Y", Y, "F", psi(x_train, x_test).reshaped(resolution, resolution));
+    tools::FileManager io_manager("rsc/eval_data.csv");
+    io_manager.write("X", X, "Y", Y, "F", (psi1(x_train.row(0), x_test) + psi2(x_train.row(1), x_test) + psi3(x_train.row(2), x_test)).reshaped(resolution, resolution));
 
     return 0;
 }

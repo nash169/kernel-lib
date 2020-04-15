@@ -1,5 +1,5 @@
-#ifndef KERNEL_LIB_KERNEL_HPP
-#define KERNEL_LIB_KERNEL_HPP
+#ifndef KERNELLIB_ABSTRACTKERNEL_HPP
+#define KERNELLIB_ABSTRACTKERNEL_HPP
 
 #include "kernel_lib/tools/macros.hpp"
 #include "kernel_lib/tools/math.hpp"
@@ -54,4 +54,4 @@ namespace kernel_lib {
 
 } // namespace kernel_lib
 
-#endif // KERNEL_LIB_KERNEL_HPP
+#endif // KERNELLIB_ABSTRACTKERNEL_HPP

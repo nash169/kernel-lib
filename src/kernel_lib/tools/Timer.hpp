@@ -1,5 +1,5 @@
-#ifndef KERNEL_LIB_TOOLS_TIMER
-#define KERNEL_LIB_TOOLS_TIMER
+#ifndef KERNELLIB_TOOLS_TIMER
+#define KERNELLIB_TOOLS_TIMER
 
 #include <chrono>
 #include <iostream>
@@ -28,7 +28,8 @@ namespace kernel_lib {
                 double ms = duration * 0.001;
                 double s = ms * 0.001;
 
-                std::cout << duration << "us (" << ms << "ms)" << " - (" << s << "s)" << std::endl;
+                std::cout << duration << "us (" << ms << "ms)"
+                          << " - (" << s << "s)" << std::endl;
             }
 
         private:
@@ -37,4 +38,4 @@ namespace kernel_lib {
     } // namespace tools
 } // namespace kernel_lib
 
-#endif // KERNEL_LIB_TOOLS_TIMER
+#endif // KERNELLIB_TOOLS_TIMER

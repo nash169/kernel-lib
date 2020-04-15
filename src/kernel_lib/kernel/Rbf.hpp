@@ -1,5 +1,5 @@
-#ifndef KERNEL_LIB_RBF_HPP
-#define KERNEL_LIB_RBF_HPP
+#ifndef KERNELLIB_KERNEL_RBF_HPP
+#define KERNELLIB_KERNEL_RBF_HPP
 
 #include "kernel_lib/AbstractKernel.hpp"
 #include <Corrade/Containers/EnumSet.h>
@@ -110,4 +110,4 @@ namespace kernel_lib {
     } // namespace kernel
 } // namespace kernel_lib
 
-#endif // KERNEL_LIB_RBF_HPP
+#endif // KERNELLIB_KERNEL_RBF_HPP

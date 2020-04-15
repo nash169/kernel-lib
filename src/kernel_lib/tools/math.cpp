@@ -47,7 +47,7 @@ namespace kernel_lib {
             return M;
         }
 
-        Eigen::MatrixXd gs_orthogonalize(const Eigen::MatrixXd& V)
+        Eigen::MatrixXd gramSchmidt(const Eigen::MatrixXd& V)
         {
             size_t n_points = V.rows(), n_features = V.cols();
 
@@ -70,6 +70,21 @@ namespace kernel_lib {
         Eigen::MatrixXd repeat_block(Eigen::MatrixXd& M, int blksize, int repeat, int direction)
         {
             return M;
+        }
+
+        Eigen::MatrixXd createCovariance(const Eigen::VectorXd& direction, const Eigen::VectorXd& std, bool inverse)
+        {
+            size_t dim = direction.rows();
+
+            Eigen::MatrixXd U = gramSchmidt(direction.transpose()),
+                            D = Eigen::MatrixXd::Identity(dim, dim);
+
+            if (inverse)
+                D.diagonal() = std.array().pow(2).inverse();
+            else
+                D.diagonal() = std.array().pow(2);
+
+            return U * D * U.transpose(); // U.transpose() * D * U; for the inverse ?
         }
 
         Chol::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma)

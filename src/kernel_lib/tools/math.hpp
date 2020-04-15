@@ -22,7 +22,9 @@ namespace kernel_lib {
 
         Eigen::MatrixXd blkdiag_revert(Eigen::MatrixXd& M, int dim);
 
-        Eigen::MatrixXd gs_orthogonalize(const Eigen::MatrixXd& V);
+        Eigen::MatrixXd gramSchmidt(const Eigen::MatrixXd& V);
+
+        Eigen::MatrixXd createCovariance(const Eigen::VectorXd& direction, const Eigen::VectorXd& std, bool inverse = false);
 
         Eigen::MatrixXd repeat_block(Eigen::MatrixXd& M, int blksize, int repeat, int direction);
 

@@ -1,5 +1,5 @@
-#ifndef KERNEL_LIB_TOOLS_MACROS_HPP
-#define KERNEL_LIB_TOOLS_MACROS_HPP
+#ifndef KERNELLIB_TOOLS_MACROS_HPP
+#define KERNELLIB_TOOLS_MACROS_HPP
 
 #include <Eigen/Core>
 #include <boost/algorithm/string.hpp>
@@ -73,4 +73,4 @@
 #define PARAM_STRING(Name, Value) \
     static constexpr const char* Name() { return Value; }
 
-#endif // KERNEL_LIB_TOOLS_MACROS_HPP
+#endif // KERNELLIB_TOOLS_MACROS_HPP
