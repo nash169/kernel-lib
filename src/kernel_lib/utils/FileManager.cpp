@@ -1,7 +1,7 @@
-#include "kernel_lib/tools/FileManager.hpp"
+#include "kernel_lib/utils/FileManager.hpp"
 
 namespace kernel_lib {
-    namespace tools {
+    namespace utils {
         FileManager::FileManager(const std::string& file_to_write)
         {
             setFile(file_to_write);
@@ -34,5 +34,5 @@ namespace kernel_lib {
 
             _open = true;
         }
-    } // namespace tools
+    } // namespace utils
 } // namespace kernel_lib

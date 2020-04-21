@@ -1,5 +1,5 @@
-#ifndef KERNEL_LIB_TOOLS_MATH_HPP
-#define KERNEL_LIB_TOOLS_MATH_HPP
+#ifndef KERNELLIB_TOOLS_MATH_HPP
+#define KERNELLIB_TOOLS_MATH_HPP
 
 #include <Eigen/Dense>
 #include <iostream>
@@ -35,4 +35,4 @@ namespace kernel_lib {
     } // namespace tools
 } // namespace kernel_lib
 
-#endif // KERNEL_LIB_TOOLS_MATH_HPP
+#endif // KERNELLIB_TOOLS_MATH_HPP

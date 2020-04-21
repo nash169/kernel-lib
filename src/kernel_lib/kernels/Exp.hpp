@@ -1,7 +1,7 @@
-#ifndef KERNELLIB_KERNEL_RBF_HPP
-#define KERNELLIB_KERNEL_RBF_HPP
+#ifndef KERNELLIB_KERNELS_EXP_HPP
+#define KERNELLIB_KERNELS_EXP_HPP
 
-#include "kernel_lib/AbstractKernel.hpp"
+#include "kernel_lib/kernels/AbstractKernel.hpp"
 #include <Corrade/Containers/EnumSet.h>
 
 namespace kernel_lib {
@@ -18,28 +18,89 @@ namespace kernel_lib {
     CORRADE_ENUMSET_OPERATORS(Covariance)
 
     namespace defaults {
-        struct kernel_rbf {
+        struct kernel_exp {
+            // Settings
             PARAM_SCALAR(Covariance, type, CovarianceType::SPHERICAL);
             PARAM_SCALAR(bool, inverse, false);
+
+            // Parameters
             PARAM_VECTOR(double, sigma, 5);
         };
     } // namespace defaults
 
-    namespace kernel {
+    namespace kernels {
         template <typename Params>
-        class Rbf : public AbstractKernel<Params, Rbf<Params>> {
+        class Exp : public AbstractKernel<Params, Exp<Params>> {
 
-            using Kernel_t = AbstractKernel<Params, Rbf<Params>>;
+            using Kernel_t = AbstractKernel<Params, Exp<Params>>;
 
         public:
-            Rbf() : _sigma(Params::kernel_rbf::sigma()), _type(Params::kernel_rbf::type()), _inverse(Params::kernel_rbf::inverse())
+            Exp() : _sigma(Params::kernel_exp::sigma()), _type(Params::kernel_exp::type()), _inverse(Params::kernel_exp::inverse())
             {
             }
 
+            /* Parameters */
+            Eigen::VectorXd parameters() const
+            {
+                Eigen::VectorXd params;
+
+                return params;
+            }
+
+            void setParameters(const Eigen::VectorXd& params)
+            {
+            }
+
+            Eigen::MatrixXd gradientParams() const
+            {
+                Eigen::MatrixXd grad_params;
+
+                return grad_params;
+            }
+
+            /* Evaluate Kernel */
             Eigen::VectorXd kernel() const
             {
                 return log_kernel().array().exp();
             }
+
+            /* Evaluate Gradient */
+            Eigen::MatrixXd gradient() const
+            {
+                Eigen::MatrixXd grad;
+
+                return grad;
+            }
+
+            /* Evaluate Hessian */
+            Eigen::MatrixXd hessian() const
+            {
+                Eigen::MatrixXd hess;
+
+                return hess;
+            }
+
+            /* Settings */
+            Exp& setCovariance(const Covariance& cov)
+            {
+                _type = cov;
+
+                return *this;
+            }
+
+            Exp& setInverse(const bool& inverse)
+            {
+                _inverse = inverse;
+
+                return *this;
+            }
+
+        protected:
+            Eigen::MatrixXd _sigma;
+
+            Covariance _type;
+
+            bool _inverse;
 
             Eigen::VectorXd log_kernel() const
             {
@@ -99,15 +160,8 @@ namespace kernel_lib {
 
                 return log_k;
             }
-
-        protected:
-            Eigen::MatrixXd _sigma;
-
-            Covariance _type;
-
-            bool _inverse;
         };
-    } // namespace kernel
+    } // namespace kernels
 } // namespace kernel_lib
 
-#endif // KERNELLIB_KERNEL_RBF_HPP
+#endif // KERNELLIB_KERNELS_EXP_HPP

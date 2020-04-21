@@ -1,11 +1,11 @@
-#ifndef KERNELLIB_TOOLS_TIMER
-#define KERNELLIB_TOOLS_TIMER
+#ifndef KERNELLIB_UTILS_TIMER_HPP
+#define KERNELLIB_UTILS_TIMER_HPP
 
 #include <chrono>
 #include <iostream>
 
 namespace kernel_lib {
-    namespace tools {
+    namespace utils {
         class Timer {
         public:
             Timer()
@@ -35,7 +35,7 @@ namespace kernel_lib {
         private:
             std::chrono::time_point<std::chrono::high_resolution_clock> _start_time;
         };
-    } // namespace tools
+    } // namespace utils
 } // namespace kernel_lib
 
-#endif // KERNELLIB_TOOLS_TIMER
+#endif // KERNELLIB_UTILS_TIMER_HPP

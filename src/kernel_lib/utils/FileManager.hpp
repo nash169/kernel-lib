@@ -1,5 +1,5 @@
-#ifndef KERNELLIB_TOOLS_FILEMANAGER_HPP
-#define KERNELLIB_TOOLS_FILEMANAGER_HPP
+#ifndef KERNELLIB_UTILS_FILEMANAGER_HPP
+#define KERNELLIB_UTILS_FILEMANAGER_HPP
 
 #include <Corrade/Utility/Directory.h>
 #include <Eigen/Core>
@@ -11,7 +11,7 @@
 using namespace Corrade::Utility::Directory;
 
 namespace kernel_lib {
-    namespace tools {
+    namespace utils {
         class FileManager {
         public:
             // Contructor
@@ -97,7 +97,7 @@ namespace kernel_lib {
             std::fstream _file;
             std::string _path, _name;
         };
-    } // namespace tools
+    } // namespace utils
 } // namespace kernel_lib
 
-#endif // KERNEL_LIB_TOOLS_FILEMANAGER_HPP
+#endif // KERNELLIB_UTILS_FILEMANAGER_HPP

@@ -26,12 +26,12 @@ int main(int argc, char const* argv[])
     standard_dev << 2, 5;
     Eigen::MatrixXd C = tools::createCovariance(direction, standard_dev);
 
-    SumRbfSpherical psi1;
-    SumRbfDiagonal2 psi2;
-    SumRbfFull2 psi3;
+    SumExpSpherical psi1;
+    SumExpDiagonal2 psi2;
+    SumExpFull2 psi3;
 
     // Evaluate expansion for plotting
-    tools::FileManager io_manager("rsc/eval_data.csv");
+    utils::FileManager io_manager("rsc/eval_data.csv");
     io_manager.write("X", X, "Y", Y, "F", (psi1(x_train.row(0), x_test) + psi2(x_train.row(1), x_test) + psi3(x_train.row(2), x_test)).reshaped(resolution, resolution));
 
     return 0;
