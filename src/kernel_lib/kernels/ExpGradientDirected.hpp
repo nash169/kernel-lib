@@ -5,7 +5,7 @@
 
 namespace kernel_lib {
     namespace defaults {
-        struct kernel_cos {
+        struct kernel_expgrad_dir {
             /* data */
         };
     } // namespace defaults

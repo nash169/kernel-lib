@@ -41,7 +41,15 @@ namespace kernel_lib {
             /* Evaluate Kernel */
             Eigen::VectorXd kernel() const
             {
-                Eigen::VectorXd ker;
+                Eigen::VectorXd ker(Kernel_t::_x_samples * Kernel_t::_y_samples);
+                size_t index = 0;
+
+                for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
+                    for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
+                        ker(index) = Kernel_t::_x.row(i) * Kernel_t::_y.row(j).transpose() / Kernel_t::_x.row(i).norm() / Kernel_t::_y.row(j).norm();
+                        index++;
+                    }
+                }
 
                 return ker;
             }

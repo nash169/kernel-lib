@@ -2,7 +2,11 @@
 #define KERNELLIB_KERNEL_HPP
 
 /* Kernels */
+#include "kernel_lib/kernels/Cosine.hpp"
 #include "kernel_lib/kernels/Exp.hpp"
+#include "kernel_lib/kernels/ExpGradientDirected.hpp"
+#include "kernel_lib/kernels/ExpVelocityDirected.hpp"
+#include "kernel_lib/kernels/Polynomial.hpp"
 
 /* Utils */
 #include "kernel_lib/utils/Expansion.hpp"
