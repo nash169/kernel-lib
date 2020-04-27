@@ -13,11 +13,32 @@ namespace kernel_lib {
     namespace kernels {
         template <typename Params>
         class ExpGradientDirected : public AbstractKernel<Params, ExpGradientDirected<Params>> {
-
-            using Kernel_t = AbstractKernel<Params, ExpGradientDirected<Params>>;
-
         public:
             ExpGradientDirected() {}
+
+            /* Evaluate Kernel */
+            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                Eigen::VectorXd ker;
+
+                return ker;
+            }
+
+            /* Evaluate Gradient */
+            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                Eigen::MatrixXd grad;
+
+                return grad;
+            }
+
+            /* Evaluate Hessian */
+            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                Eigen::MatrixXd hess;
+
+                return hess;
+            }
 
             /* Parameters */
             Eigen::VectorXd parameters() const
@@ -31,35 +52,11 @@ namespace kernel_lib {
             {
             }
 
-            Eigen::MatrixXd gradientParams() const
+            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 Eigen::MatrixXd grad_params;
 
                 return grad_params;
-            }
-
-            /* Evaluate Kernel */
-            Eigen::VectorXd kernel() const
-            {
-                Eigen::VectorXd ker;
-
-                return ker;
-            }
-
-            /* Evaluate Gradient */
-            Eigen::MatrixXd gradient() const
-            {
-                Eigen::MatrixXd grad;
-
-                return grad;
-            }
-
-            /* Evaluate Hessian */
-            Eigen::MatrixXd hessian() const
-            {
-                Eigen::MatrixXd hess;
-
-                return hess;
             }
 
             /* Settings */

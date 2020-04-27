@@ -21,94 +21,60 @@ namespace kernel_lib {
                 _sigma_n = (Params::kernel::sigma_n() == 0) ? 1e-8 : Params::kernel::sigma_n();
             }
 
-            /* Data */
-            std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> data()
+            /* Evaluate Kernel */
+            Eigen::VectorXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
             {
-                return std::make_tuple(_x, _y);
+                return static_cast<const Kernel*>(this)->kernel(x, y);
             }
 
-            void setData(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
+            /* Evaluate Gradient */
+            Eigen::MatrixXd grad(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
             {
-                _n_features = x.cols();
-                REQUIRED_DIMENSION(_n_features == y.cols(), "Y must have the same dimension of X")
+                return this->grad(x, y);
+            }
 
-                _x_samples = x.rows();
-                _y_samples = y.rows();
-
-                _x = x;
-                _y = y;
+            /* Evaluate Hessian */
+            Eigen::MatrixXd hess(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
+            {
+                return static_cast<const Kernel*>(this)->hessian(x, y);
             }
 
             /* Parameters */
             Eigen::VectorXd params()
             {
-                return static_cast<const Kernel*>(this)->parameters();
+                Eigen::VectorXd params(sizeParams());
+                params(0) = _sigma_f;
+                params(1) = _sigma_n;
+                params.segment(2, params.rows() - 2) = static_cast<const Kernel*>(this)->parameters();
+
+                return params;
             }
 
             void setParams(const Eigen::VectorXd& params)
             {
-                static_cast<Kernel*>(this)->setParameters(params);
+                _sigma_f = params(0);
+                _sigma_n = params(1);
+                static_cast<Kernel*>(this)->setParameters(params.segment(2, params.rows() - 2));
             }
 
-            Eigen::MatrixXd gradParams()
+            Eigen::MatrixXd gradParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
             {
-                return static_cast<const Kernel*>(this)->gradientParams();
+                Eigen::MatrixXd grad_params(x.rows() * y.rows(), sizeParams());
+
+                grad_params.block(0, 0, grad_params.rows(), 1) = 2 * _sigma_f * static_cast<const Kernel*>(this)->kernel(x, y);
+
+                grad_params.block(0, 2, grad_params.rows(), grad_params.cols() - 2) = static_cast<const Kernel*>(this)->gradientParams(x, y);
+
+                return grad_params;
             }
 
             size_t sizeParams()
             {
-                return static_cast<const Kernel*>(this)->sizeParameters();
-            }
-
-            /* Settings */
-            // Settings are specific for each kernel
-
-            /* Evaluate Kernel */
-            Eigen::VectorXd
-            operator()() const
-            {
-                return static_cast<const Kernel*>(this)->kernel();
-            }
-
-            Eigen::VectorXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
-            {
-                setData(x, y);
-
-                return (*this)();
-            }
-
-            /* Evaluate Gradient */
-            Eigen::MatrixXd grad() const
-            {
-                return static_cast<const Kernel*>(this)->gradient();
-            }
-
-            Eigen::MatrixXd grad(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
-            {
-                setData(x, y);
-
-                return this->grad();
-            }
-
-            /* Evaluate Hessian */
-            Eigen::MatrixXd hess() const
-            {
-                return static_cast<const Kernel*>(this)->hessian();
-            }
-
-            Eigen::MatrixXd hess(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
-            {
-                setData(x, y);
-
-                return this->hess();
+                return 2 + static_cast<const Kernel*>(this)->sizeParameters();
             }
 
         protected:
-            size_t _n_features, _x_samples, _y_samples;
-
             double _sigma_f, _sigma_n;
-
-            Eigen::MatrixXd _x, _y;
         };
     } // namespace kernels
 } // namespace kernel_lib

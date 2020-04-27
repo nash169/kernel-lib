@@ -17,32 +17,61 @@
 #include "kernel_lib/tools/math.hpp"
 
 namespace kernel_lib {
-    /** Define elements based on spherical covariance RBF */
-    struct ParamsExpSpherical {
+    /* Generic arameters */
+    struct ParamsDefaults {
         struct kernel : public defaults::kernel {
-            PARAM_SCALAR(double, sigma_n, 1.0);
-            PARAM_SCALAR(double, sigma_f, 1.0);
         };
+
         struct kernel_exp : public defaults::kernel_exp {
-            PARAM_SCALAR(Covariance, type, CovarianceType::SPHERICAL);
-            PARAM_SCALAR(bool, inverse, false);
-            PARAM_VECTOR(double, sigma, 1.0);
         };
+
+        struct kernel_cos : public defaults::kernel_cos {
+        };
+
+        struct kernel_poly : public defaults::kernel_poly {
+        };
+
+        struct kernel_expvel_dir : public defaults::kernel_expvel_dir {
+            /* data */
+        };
+
         struct expansion : public defaults::expansion {
-            PARAM_VECTOR(double, weight, 1);
         };
     };
 
-    // Spherical RBF
-    using ExpSpherical = kernels::Exp<ParamsExpSpherical>;
-    // typedef kernel::Rbf<ParamsRbfSpherical> RbfSpherical;
+    /** Exp SPHERICAL kernel
+     * @default parameters defintion for kernel and expansion
+     */
 
-    // Kernel expansion based on spherical RBF
-    using SumExpSpherical = utils::Expansion<ParamsExpSpherical, ExpSpherical>;
-    // template <typename Params>
-    // using SumRbf = Expansion<Params, RbfSpherical>;
+    using SqExp = kernels::Exp<ParamsDefaults>; // typedef kernel::Rbf<ParamsRbfSpherical> RbfSpherical;
+    using SumSqExp = utils::Expansion<ParamsDefaults, SqExp>; // template <typename Params> using SumRbf = Expansion<Params, RbfSpherical>;
 
-    /** Define elements based on diagonal covariance RBF */
+    /** Cosine kernel
+     * @default parameters defintion for kernel and expansion
+     */
+
+    typedef kernels::Cosine<ParamsDefaults> Cosine;
+    typedef utils::Expansion<ParamsDefaults, Cosine> SumCosine;
+
+    /** Polynomial kernel
+     * @default parameters defintion for kernel and expansion
+     */
+
+    typedef kernels::Polynomial<ParamsDefaults> Polynomial;
+    typedef utils::Expansion<ParamsDefaults, Polynomial> SumPolynomial;
+
+    /** Squared Exponential Velocity Directed kernel
+     * @default parameters defintion for kernel and expansion
+     */
+
+    typedef kernels::ExpVelocityDirected<ParamsDefaults> ExpVelocityDirected;
+    typedef utils::Expansion<ParamsDefaults, ExpVelocityDirected> SumExpVelocityDirected;
+
+    /** Exp DIAGONAL kernel
+     * @default parameters defintion for kernel and expansion
+     */
+
+    /* Diagonal covariance parameters */
     struct ParamsExpDiagonal2 {
         struct kernel : public defaults::kernel {
             PARAM_SCALAR(double, sigma_n, 1.0);
@@ -58,12 +87,17 @@ namespace kernel_lib {
         };
     };
 
-    // Diagonal RBF
+    /* Diagonal covariance kernel */
     using ExpDiagonal2 = kernels::Exp<ParamsExpDiagonal2>;
-    // Kernel expansion based on spherical RBF
+
+    /* Diagonal covariance kernel expansion */
     using SumExpDiagonal2 = utils::Expansion<ParamsExpDiagonal2, ExpDiagonal2>;
 
-    /** Define elements based on full covariance RBF */
+    /** Exp FULL kernel
+     * @default parameters defintion for kernel and expansion
+     */
+
+    /* Full covariance parameters */
     struct ParamsExpFull2 {
         struct kernel : public defaults::kernel {
             PARAM_SCALAR(double, sigma_n, 1.0);
@@ -79,9 +113,10 @@ namespace kernel_lib {
         };
     };
 
-    // Diagonal RBF
+    /* Full covariance kernel */
     using ExpFull2 = kernels::Exp<ParamsExpFull2>;
-    // Kernel expansion based on spherical RBF
+
+    /* Full covariance kernel expansion */
     using SumExpFull2 = utils::Expansion<ParamsExpFull2, ExpFull2>;
 
 } // namespace kernel_lib

@@ -1,7 +1,8 @@
 #ifndef KERNELLIB_KERNELS_EXPVELOCITYDIRECTED_HPP
 #define KERNELLIB_KERNELS_EXPVELOCITYDIRECTED_HPP
 
-#include "kernel_lib/kernels/AbstractKernel.hpp"
+#include "kernel_lib/kernels/Exp.hpp"
+#include "kernel_lib/kernels/Polynomial.hpp"
 
 namespace kernel_lib {
     namespace defaults {
@@ -11,13 +12,34 @@ namespace kernel_lib {
     } // namespace defaults
 
     namespace kernels {
-        template <typename Params>
+        template <typename Params, typename KernelExp = Exp<Params>, typename KernelCosine = Polynomial<Params>>
         class ExpVelocityDirected : public AbstractKernel<Params, ExpVelocityDirected<Params>> {
-
-            using Kernel_t = AbstractKernel<Params, ExpVelocityDirected<Params>>;
-
         public:
-            ExpVelocityDirected() {}
+            ExpVelocityDirected() : _exp(), _cosine()
+            {
+            }
+
+            /* Evaluate Kernel */
+            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                // return _exp(x, y) + _cosine(x, y);
+            }
+
+            /* Evaluate Gradient */
+            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                Eigen::MatrixXd grad;
+
+                return grad;
+            }
+
+            /* Evaluate Hessian */
+            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                Eigen::MatrixXd hess;
+
+                return hess;
+            }
 
             /* Parameters */
             Eigen::VectorXd parameters() const
@@ -31,40 +53,18 @@ namespace kernel_lib {
             {
             }
 
-            Eigen::MatrixXd gradientParams() const
+            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 Eigen::MatrixXd grad_params;
 
                 return grad_params;
             }
 
-            /* Evaluate Kernel */
-            Eigen::VectorXd kernel() const
-            {
-                Eigen::VectorXd ker;
-
-                return ker;
-            }
-
-            /* Evaluate Gradient */
-            Eigen::MatrixXd gradient() const
-            {
-                Eigen::MatrixXd grad;
-
-                return grad;
-            }
-
-            /* Evaluate Hessian */
-            Eigen::MatrixXd hessian() const
-            {
-                Eigen::MatrixXd hess;
-
-                return hess;
-            }
-
             /* Settings */
 
         protected:
+            KernelExp _exp;
+            KernelCosine _cosine;
         };
     } // namespace kernels
 } // namespace kernel_lib

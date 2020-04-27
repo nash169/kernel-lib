@@ -31,41 +31,19 @@ namespace kernel_lib {
     namespace kernels {
         template <typename Params>
         class Exp : public AbstractKernel<Params, Exp<Params>> {
-
-            using Kernel_t = AbstractKernel<Params, Exp<Params>>;
-
         public:
             Exp() : _sigma(Params::kernel_exp::sigma()), _type(Params::kernel_exp::type()), _inverse(Params::kernel_exp::inverse())
             {
             }
 
-            /* Parameters */
-            Eigen::VectorXd parameters() const
-            {
-                Eigen::VectorXd params;
-
-                return params;
-            }
-
-            void setParameters(const Eigen::VectorXd& params)
-            {
-            }
-
-            Eigen::MatrixXd gradientParams() const
-            {
-                Eigen::MatrixXd grad_params;
-
-                return grad_params;
-            }
-
             /* Evaluate Kernel */
-            Eigen::VectorXd kernel() const
+            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                return log_kernel().array().exp();
+                return log_kernel(x, y).array().exp();
             }
 
             /* Evaluate Gradient */
-            Eigen::MatrixXd gradient() const
+            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 Eigen::MatrixXd grad;
 
@@ -73,11 +51,34 @@ namespace kernel_lib {
             }
 
             /* Evaluate Hessian */
-            Eigen::MatrixXd hessian() const
+            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 Eigen::MatrixXd hess;
 
                 return hess;
+            }
+
+            /* Parameters */
+            Eigen::VectorXd parameters() const
+            {
+                return _sigma;
+            }
+
+            void setParameters(const Eigen::VectorXd& params)
+            {
+                _sigma = params;
+            }
+
+            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                Eigen::MatrixXd grad_params;
+
+                return grad_params;
+            }
+
+            size_t sizeParameters() const
+            {
+                return _sigma.rows();
             }
 
             /* Settings */
@@ -102,44 +103,46 @@ namespace kernel_lib {
 
             bool _inverse;
 
-            Eigen::VectorXd log_kernel() const
+            Eigen::VectorXd log_kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                Eigen::VectorXd log_k(Kernel_t::_x_samples * Kernel_t::_y_samples);
-                size_t index = 0;
+                size_t index = 0, x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
+                REQUIRED_DIMENSION(n_features == y.cols(), "Y must have the same dimension of X")
+
+                Eigen::VectorXd log_k(x_samples * y_samples);
 
                 if (_type & CovarianceType::SPHERICAL) {
                     REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
 
                     double sig = -0.5 / std::pow(_sigma(0, 0), 2);
 
-                    for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
-                        for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                            log_k(index) = (Kernel_t::_x.row(i) - Kernel_t::_y.row(j)).squaredNorm() * sig;
+                    for (size_t i = 0; i < x_samples; i++) {
+                        for (size_t j = 0; j < y_samples; j++) {
+                            log_k(index) = (x.row(i) - y.row(j)).squaredNorm() * sig;
                             index++;
                         }
                     }
                 }
                 else if (_type & CovarianceType::DIAGONAL) {
-                    REQUIRED_DIMENSION(_sigma.rows() == Kernel_t::_n_features, "Sigma requires dimension equal to the number of features")
+                    REQUIRED_DIMENSION(_sigma.rows() == n_features, "Sigma requires dimension equal to the number of features")
 
                     Eigen::Array<double, 1, Eigen::Dynamic> sig = -0.5 * _sigma.transpose().array().pow(2).inverse();
 
-                    for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
-                        for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                            log_k(index) = ((Kernel_t::_x.row(i) - Kernel_t::_y.row(j)).array().square() * sig).sum();
+                    for (size_t i = 0; i < x_samples; i++) {
+                        for (size_t j = 0; j < y_samples; j++) {
+                            log_k(index) = ((x.row(i) - y.row(j)).array().square() * sig).sum();
                             index++;
                         }
                     }
                 }
                 else if (_type & CovarianceType::FULL) {
-                    REQUIRED_DIMENSION(_sigma.rows() == std::pow(Kernel_t::_n_features, 2), "Sigma requires dimension equal to squared number of features")
+                    REQUIRED_DIMENSION(_sigma.rows() == std::pow(n_features, 2), "Sigma requires dimension equal to squared number of features")
 
                     if (_inverse) {
-                        const Eigen::MatrixXd& sig = _sigma.reshaped(Kernel_t::_n_features, Kernel_t::_n_features) * -0.5;
+                        const Eigen::MatrixXd& sig = _sigma.reshaped(n_features, n_features) * -0.5;
 
-                        for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
-                            for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                                const Eigen::VectorXd& v = Kernel_t::_x.row(i) - Kernel_t::_y.row(j);
+                        for (size_t i = 0; i < x_samples; i++) {
+                            for (size_t j = 0; j < y_samples; j++) {
+                                const Eigen::VectorXd& v = x.row(i) - y.row(j);
                                 log_k(index) = v.transpose() * sig * v;
                                 index++;
                             }
@@ -147,11 +150,11 @@ namespace kernel_lib {
                     }
                     else {
                         // Why this? const and reference?
-                        const Chol::Traits::MatrixL& L = tools::cholesky(_sigma.reshaped(Kernel_t::_n_features, Kernel_t::_n_features));
+                        const Chol::Traits::MatrixL& L = tools::cholesky(_sigma.reshaped(n_features, n_features));
 
-                        for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
-                            for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                                log_k(index) = L.solve((Kernel_t::_x.row(i) - Kernel_t::_y.row(j)).transpose()).squaredNorm() * -0.5;
+                        for (size_t i = 0; i < x_samples; i++) {
+                            for (size_t j = 0; j < y_samples; j++) {
+                                log_k(index) = L.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5;
                                 index++;
                             }
                         }

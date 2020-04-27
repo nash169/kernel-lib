@@ -14,11 +14,42 @@ namespace kernel_lib {
     namespace kernels {
         template <typename Params>
         class Polynomial : public AbstractKernel<Params, Polynomial<Params>> {
-
-            using Kernel_t = AbstractKernel<Params, Polynomial<Params>>;
-
         public:
-            Polynomial() {}
+            Polynomial() : _const(Params::kernel_poly::constant()), _degree(Params::kernel_poly::degree())
+            {
+            }
+
+            /* Evaluate Kernel */
+            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                return dotProduct(x, y).array().pow(_degree);
+            }
+
+            /* Evaluate Gradient */
+            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                size_t index = 0, x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
+                REQUIRED_DIMENSION(n_features == y.cols(), "Y must have the same dimension of X")
+
+                Eigen::VectorXd grad(x_samples * y_samples);
+
+                for (size_t i = 0; i < x_samples; i++) {
+                    for (size_t j = 0; j < y_samples; j++) {
+                        grad.row(index) = _degree * std::pow(x.row(i) * y.row(j).transpose() + _const, _degree - 1) * x.row(i);
+                        index++;
+                    }
+                }
+
+                return _degree * dotProduct(x, y).array.pow(_degree - 1);
+            }
+
+            /* Evaluate Hessian */
+            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                Eigen::MatrixXd hess;
+
+                return hess;
+            }
 
             /* Parameters */
             Eigen::VectorXd parameters() const
@@ -32,41 +63,11 @@ namespace kernel_lib {
             {
             }
 
-            Eigen::MatrixXd gradientParams() const
+            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 Eigen::MatrixXd grad_params;
 
                 return grad_params;
-            }
-
-            /* Evaluate Kernel */
-            Eigen::VectorXd kernel() const
-            {
-                return dotProduct().array().pow(_degree);
-            }
-
-            /* Evaluate Gradient */
-            Eigen::MatrixXd gradient() const
-            {
-                Eigen::VectorXd grad(Kernel_t::_x_samples * Kernel_t::_y_samples);
-                size_t index = 0;
-
-                for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
-                    for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                        grad.row(index) = _degree * std::pow(Kernel_t::_x.row(i) * Kernel_t::_y.row(j).transpose() + _const, _degree - 1) * Kernel_t::_x.row(i);
-                        index++;
-                    }
-                }
-
-                return _degree * dotProduct().array.pow(_degree - 1);
-            }
-
-            /* Evaluate Hessian */
-            Eigen::MatrixXd hessian() const
-            {
-                Eigen::MatrixXd hess;
-
-                return hess;
             }
 
             /* Settings */
@@ -75,17 +76,21 @@ namespace kernel_lib {
             double _const;
             int _degree;
 
-            Eigen::VectorXd dotProduct() const
+            Eigen::VectorXd dotProduct(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                Eigen::VectorXd dot_prod(Kernel_t::_x_samples * Kernel_t::_y_samples);
-                size_t index = 0;
+                size_t index = 0, x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
+                REQUIRED_DIMENSION(n_features == y.cols(), "Y must have the same dimension of X")
 
-                for (size_t i = 0; i < Kernel_t::_x_samples; i++) {
-                    for (size_t j = 0; j < Kernel_t::_y_samples; j++) {
-                        dot_prod(index) = Kernel_t::_x.row(i) * Kernel_t::_y.row(j).transpose() + _const;
+                Eigen::VectorXd dot_prod(x_samples * y_samples);
+
+                for (size_t i = 0; i < x_samples; i++) {
+                    for (size_t j = 0; j < y_samples; j++) {
+                        dot_prod(index) = x.row(i) * y.row(j).transpose() + _const;
                         index++;
                     }
                 }
+
+                return dot_prod;
             }
         };
     } // namespace kernels
