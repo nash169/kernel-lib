@@ -32,9 +32,7 @@ namespace kernel_lib {
         template <typename Params>
         class Exp : public AbstractKernel<Params, Exp<Params>> {
         public:
-            Exp() : _sigma(Params::kernel_exp::sigma()), _type(Params::kernel_exp::type()), _inverse(Params::kernel_exp::inverse())
-            {
-            }
+            Exp() : _sigma(Params::kernel_exp::sigma()), _type(Params::kernel_exp::type()), _inverse(Params::kernel_exp::inverse()) {}
 
             /* Evaluate Kernel */
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const

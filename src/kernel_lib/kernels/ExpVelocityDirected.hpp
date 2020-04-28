@@ -15,9 +15,7 @@ namespace kernel_lib {
         template <typename Params>
         class ExpVelocityDirected : public AbstractKernel<Params, ExpVelocityDirected<Params>> {
         public:
-            ExpVelocityDirected() : _exp(), _cosine()
-            {
-            }
+            ExpVelocityDirected() : _exp(), _cosine() {}
 
             /* Evaluate Kernel */
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const

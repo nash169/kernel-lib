@@ -15,9 +15,7 @@ namespace kernel_lib {
         template <typename Params>
         class Polynomial : public AbstractKernel<Params, Polynomial<Params>> {
         public:
-            Polynomial() : _const(Params::kernel_poly::constant()), _degree(Params::kernel_poly::degree())
-            {
-            }
+            Polynomial() : _const(Params::kernel_poly::constant()), _degree(Params::kernel_poly::degree()) {}
 
             /* Evaluate Kernel */
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const

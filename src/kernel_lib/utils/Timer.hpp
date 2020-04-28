@@ -12,6 +12,7 @@ namespace kernel_lib {
             {
                 _start_time = std::chrono::high_resolution_clock::now();
             }
+
             ~Timer()
             {
                 stop();

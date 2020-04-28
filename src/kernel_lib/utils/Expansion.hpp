@@ -14,9 +14,7 @@ namespace kernel_lib {
         template <typename Params, typename Kernel = kernels::Exp<Params>>
         class Expansion {
         public:
-            Expansion() : _kernel(), _reference_first(Params::expansion::reference_first())
-            {
-            }
+            Expansion() : _kernel(), _reference_first(Params::expansion::reference_first()) {}
 
             Eigen::VectorXd operator()(const Eigen::MatrixXd& x)
             {
