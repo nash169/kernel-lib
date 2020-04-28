@@ -22,7 +22,7 @@ namespace kernel_lib {
             /* Evaluate Kernel */
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                // return _exp(x, y) + _cosine(x, y);
+                return _exp(x, y) + _cosine(x, y);
             }
 
             /* Evaluate Gradient */

@@ -22,19 +22,19 @@ namespace kernel_lib {
             }
 
             /* Evaluate Kernel */
-            Eigen::VectorXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
+            Eigen::VectorXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 return static_cast<const Kernel*>(this)->kernel(x, y);
             }
 
             /* Evaluate Gradient */
-            Eigen::MatrixXd grad(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
+            Eigen::MatrixXd grad(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 return this->grad(x, y);
             }
 
             /* Evaluate Hessian */
-            Eigen::MatrixXd hess(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
+            Eigen::MatrixXd hess(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 return static_cast<const Kernel*>(this)->hessian(x, y);
             }
