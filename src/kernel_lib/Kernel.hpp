@@ -19,20 +19,10 @@
 namespace kernel_lib {
     /* Generic arameters */
     struct ParamsDefaults {
-        struct kernel : public defaults::kernel {
-        };
-
         struct kernel_exp : public defaults::kernel_exp {
         };
 
-        struct kernel_cos : public defaults::kernel_cos {
-        };
-
         struct kernel_poly : public defaults::kernel_poly {
-        };
-
-        struct kernel_expvel_dir : public defaults::kernel_expvel_dir {
-            /* data */
         };
 
         struct expansion : public defaults::expansion {
@@ -73,10 +63,6 @@ namespace kernel_lib {
 
     /* Diagonal covariance parameters */
     struct ParamsExpDiagonal2 {
-        struct kernel : public defaults::kernel {
-            PARAM_SCALAR(double, sigma_n, 1.0);
-            PARAM_SCALAR(double, sigma_f, 1.0);
-        };
         struct kernel_exp : public defaults::kernel_exp {
             PARAM_SCALAR(Covariance, type, CovarianceType::DIAGONAL);
             PARAM_SCALAR(bool, inverse, false);
@@ -99,10 +85,6 @@ namespace kernel_lib {
 
     /* Full covariance parameters */
     struct ParamsExpFull2 {
-        struct kernel : public defaults::kernel {
-            PARAM_SCALAR(double, sigma_n, 1.0);
-            PARAM_SCALAR(double, sigma_f, 1.0);
-        };
         struct kernel_exp : public defaults::kernel_exp {
             PARAM_SCALAR(Covariance, type, CovarianceType::FULL);
             PARAM_SCALAR(bool, inverse, false);

@@ -5,76 +5,57 @@
 #include "kernel_lib/tools/math.hpp"
 
 namespace kernel_lib {
-    namespace defaults {
-        struct kernel {
-            PARAM_SCALAR(double, sigma_f, 1.0);
-            PARAM_SCALAR(double, sigma_n, 0.0);
-        };
-    } // namespace defaults
-
     namespace kernels {
-        template <typename Params, typename Kernel>
         class AbstractKernel {
         public:
-            AbstractKernel() : _sigma_f(Params::kernel::sigma_f())
-            {
-                _sigma_n = (Params::kernel::sigma_n() == 0) ? 1e-8 : Params::kernel::sigma_n();
-            }
+            AbstractKernel() {}
 
             /* Evaluate Kernel */
             Eigen::VectorXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                return static_cast<const Kernel*>(this)->kernel(x, y);
+                return this->kernel(x, y);
             }
 
             /* Evaluate Gradient */
             Eigen::MatrixXd grad(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                return this->grad(x, y);
+                return this->gradient(x, y);
             }
 
             /* Evaluate Hessian */
             Eigen::MatrixXd hess(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                return static_cast<const Kernel*>(this)->hessian(x, y);
+                return this->hessian(x, y);
             }
 
             /* Parameters */
             Eigen::VectorXd params()
             {
-                Eigen::VectorXd params(sizeParams());
-                params(0) = _sigma_f;
-                params(1) = _sigma_n;
-                params.segment(2, params.rows() - 2) = static_cast<const Kernel*>(this)->parameters();
-
-                return params;
+                return this->parameters();
             }
 
             void setParams(const Eigen::VectorXd& params)
             {
-                _sigma_f = params(0);
-                _sigma_n = params(1);
-                static_cast<Kernel*>(this)->setParameters(params.segment(2, params.rows() - 2));
+                this->setParameters(params);
             }
 
             Eigen::MatrixXd gradParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
             {
-                Eigen::MatrixXd grad_params(x.rows() * y.rows(), sizeParams());
-
-                grad_params.block(0, 0, grad_params.rows(), 1) = 2 * _sigma_f * static_cast<const Kernel*>(this)->kernel(x, y);
-
-                grad_params.block(0, 2, grad_params.rows(), grad_params.cols() - 2) = static_cast<const Kernel*>(this)->gradientParams(x, y);
-
-                return grad_params;
+                return this->gradientParams(x, y);
             }
 
             size_t sizeParams()
             {
-                return 2 + static_cast<const Kernel*>(this)->sizeParameters();
+                return this->sizeParameters();
             }
 
-        protected:
-            double _sigma_f, _sigma_n;
+            virtual Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const = 0;
+            virtual Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const = 0;
+            virtual Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const = 0;
+            virtual Eigen::VectorXd parameters() const = 0;
+            virtual void setParameters(const Eigen::VectorXd& params) = 0;
+            virtual Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const = 0;
+            virtual size_t sizeParameters() const = 0;
         };
     } // namespace kernels
 } // namespace kernel_lib

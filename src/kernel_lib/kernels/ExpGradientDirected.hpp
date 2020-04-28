@@ -4,20 +4,14 @@
 #include "kernel_lib/kernels/AbstractKernel.hpp"
 
 namespace kernel_lib {
-    namespace defaults {
-        struct kernel_expgrad_dir {
-            /* data */
-        };
-    } // namespace defaults
-
     namespace kernels {
         template <typename Params>
-        class ExpGradientDirected : public AbstractKernel<Params, ExpGradientDirected<Params>> {
+        class ExpGradientDirected : public AbstractKernel {
         public:
             ExpGradientDirected() {}
 
             /* Evaluate Kernel */
-            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::VectorXd ker;
 
@@ -25,7 +19,7 @@ namespace kernel_lib {
             }
 
             /* Evaluate Gradient */
-            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd grad;
 
@@ -33,7 +27,7 @@ namespace kernel_lib {
             }
 
             /* Evaluate Hessian */
-            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd hess;
 
@@ -41,27 +35,26 @@ namespace kernel_lib {
             }
 
             /* Parameters */
-            Eigen::VectorXd parameters() const
+            Eigen::VectorXd parameters() const override
             {
                 Eigen::VectorXd params;
 
                 return params;
             }
 
-            void setParameters(const Eigen::VectorXd& params)
-            {
-            }
+            void setParameters(const Eigen::VectorXd& params) override {}
 
-            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd grad_params;
 
                 return grad_params;
             }
 
-            /* Settings */
-
-        protected:
+            size_t sizeParameters() const override
+            {
+                return 0;
+            }
         };
     } // namespace kernels
 } // namespace kernel_lib

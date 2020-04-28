@@ -30,18 +30,18 @@ namespace kernel_lib {
 
     namespace kernels {
         template <typename Params>
-        class Exp : public AbstractKernel<Params, Exp<Params>> {
+        class Exp : public AbstractKernel {
         public:
             Exp() : _sigma(Params::kernel_exp::sigma()), _type(Params::kernel_exp::type()), _inverse(Params::kernel_exp::inverse()) {}
 
             /* Evaluate Kernel */
-            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 return log_kernel(x, y).array().exp();
             }
 
             /* Evaluate Gradient */
-            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd grad;
 
@@ -49,7 +49,7 @@ namespace kernel_lib {
             }
 
             /* Evaluate Hessian */
-            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd hess;
 
@@ -57,24 +57,24 @@ namespace kernel_lib {
             }
 
             /* Parameters */
-            Eigen::VectorXd parameters() const
+            Eigen::VectorXd parameters() const override
             {
                 return _sigma;
             }
 
-            void setParameters(const Eigen::VectorXd& params)
+            void setParameters(const Eigen::VectorXd& params) override
             {
                 _sigma = params;
             }
 
-            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd grad_params;
 
                 return grad_params;
             }
 
-            size_t sizeParameters() const
+            size_t sizeParameters() const override
             {
                 return _sigma.rows();
             }
