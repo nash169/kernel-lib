@@ -59,9 +59,7 @@ namespace kernel_lib {
                 return params;
             }
 
-            void setParameters(const Eigen::VectorXd& params)
-            {
-            }
+            void setParameters(const Eigen::VectorXd& params) {}
 
             Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
