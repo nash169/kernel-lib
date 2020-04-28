@@ -12,7 +12,7 @@ namespace kernel_lib {
     } // namespace defaults
 
     namespace kernels {
-        template <typename Params, typename KernelExp = Exp<Params>, typename KernelCosine = Polynomial<Params>>
+        template <typename Params>
         class ExpVelocityDirected : public AbstractKernel<Params, ExpVelocityDirected<Params>> {
         public:
             ExpVelocityDirected() : _exp(), _cosine()
@@ -63,8 +63,8 @@ namespace kernel_lib {
             /* Settings */
 
         protected:
-            KernelExp _exp;
-            KernelCosine _cosine;
+            Exp<Params> _exp;
+            Polynomial<Params> _cosine;
         };
     } // namespace kernels
 } // namespace kernel_lib
