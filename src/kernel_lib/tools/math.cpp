@@ -47,6 +47,11 @@ namespace kernel_lib {
             return M;
         }
 
+        Eigen::MatrixXd repeat_block(Eigen::MatrixXd& M, int blksize, int repeat, int direction)
+        {
+            return M;
+        }
+
         Eigen::MatrixXd gramSchmidt(const Eigen::MatrixXd& V)
         {
             size_t n_points = V.rows(), n_features = V.cols();
@@ -67,9 +72,16 @@ namespace kernel_lib {
             return -M;
         }
 
-        Eigen::MatrixXd repeat_block(Eigen::MatrixXd& M, int blksize, int repeat, int direction)
+        Eigen::VectorXd linearMap(Eigen::VectorXd x, double xmin, double xmax, double ymin, double ymax)
         {
-            return M;
+            double m = (ymin - ymax) / (xmin - xmax), q = ymin - m * xmin;
+
+            Eigen::VectorXd y(x.rows());
+
+            for (size_t i = 0; i < y.rows(); i++)
+                y(i) = m * x(i) + q;
+
+            return y;
         }
 
         Eigen::MatrixXd createCovariance(const Eigen::VectorXd& direction, const Eigen::VectorXd& std, bool inverse)

@@ -1,20 +1,30 @@
 #ifndef KERNELLIB_KERNELS_EXPVELOCITYDIRECTED_HPP
 #define KERNELLIB_KERNELS_EXPVELOCITYDIRECTED_HPP
 
+#include "kernel_lib/kernels/Cosine.hpp"
 #include "kernel_lib/kernels/Exp.hpp"
-#include "kernel_lib/kernels/Polynomial.hpp"
 
 namespace kernel_lib {
+    namespace defaults {
+        struct kernel_exp_vel {
+            // Settings
+            PARAM_SCALAR(double, angle_ref, M_PI);
+        };
+    } // namespace defaults
     namespace kernels {
         template <typename Params>
         class ExpVelocityDirected : public AbstractKernel {
         public:
-            ExpVelocityDirected() : _exp(), _cosine() {}
+            ExpVelocityDirected() : _exp(), _cosine(), _angle_ref(Params::kernel_exp_vel::angle_ref())
+            {
+                _upper_limit = 3 * Params::kernel_exp::sigma()(0);
+            }
 
             /* Evaluate Kernel */
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
-                return _exp(x, y) + _cosine(x, y);
+                size_t m_x = x.rows(), m_y = y.rows(), d = x.cols() / 2;
+                return _exp(x.block(0, 0, m_x, d), y.block(0, 0, m_y, d)).array() * tools::linearMap(_cosine(x.block(0, d, m_x, d), y.block(0, d, m_y, d)), std::cos(_angle_ref), 1, _upper_limit, 0).array().exp();
             }
 
             /* Evaluate Gradient */
@@ -52,12 +62,14 @@ namespace kernel_lib {
 
             size_t sizeParameters() const override
             {
-                return 0;
+                return _exp.sizeParameters() + _cosine.sizeParameters();
             }
 
         protected:
+            double _angle_ref, _upper_limit;
+
             Exp<Params> _exp;
-            Polynomial<Params> _cosine;
+            Cosine<Params> _cosine;
         };
     } // namespace kernels
 } // namespace kernel_lib
