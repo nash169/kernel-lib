@@ -6,11 +6,23 @@ import numpy as np
 
 def get_line(name, fs):
     while True:
-        line = next(fs)
+        try:
+            line = next(fs)
+        except StopIteration:
+            return
+
         if name in line:
-            next(fs)
+            try:
+                next(fs)
+            except StopIteration:
+                return
+
             while True:
-                line = next(fs)
+                try:
+                    line = next(fs)
+                except StopIteration:
+                    return
+
                 if line in ["\n", "\r\n"]:
                     break
                 else:
