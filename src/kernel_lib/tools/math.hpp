@@ -26,6 +26,8 @@ namespace kernel_lib {
 
         Eigen::MatrixXd createCovariance(const Eigen::VectorXd& direction, const Eigen::VectorXd& std, bool inverse = false);
 
+        Eigen::VectorXd linearMap(Eigen::VectorXd x, double xmin, double xmax, double ymin, double ymax);
+
         Eigen::MatrixXd repeat_block(Eigen::MatrixXd& M, int blksize, int repeat, int direction);
 
         // Code from limbo to calculate the cholesky (check if optimized)

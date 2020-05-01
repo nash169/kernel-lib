@@ -4,9 +4,6 @@
 using namespace kernel_lib;
 
 struct Params {
-    struct kernel : public defaults::kernel {
-        PARAM_SCALAR(double, sigma_n, 1.0);
-    };
     struct kernel_exp : public defaults::kernel_exp {
         PARAM_SCALAR(Covariance, type, CovarianceType::FULL);
         PARAM_SCALAR(bool, inverse, false);

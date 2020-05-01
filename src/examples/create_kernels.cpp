@@ -71,8 +71,14 @@ int main(int argc, char const* argv[])
     std::cout << "Squared Exponential Velocity Directed kernel" << std::endl;
     SumExpVelocityDirected exp_velocity;
 
+    Eigen::MatrixXd A(x_train.rows(), 2 * x_train.cols()), B(x_test.rows(), 2 * x_test.cols());
+    A << x_train, x_train;
+    B << x_test, x_test;
+
     io_manager.setFile("rsc/exp_velocity.csv");
-    io_manager.write("X", X, "Y", Y, "F", exp_velocity(x_train, x_test).reshaped(resolution, resolution));
+
+    exp_velocity(A, B);
+    // io_manager.write("X", X, "Y", Y, "F", exp_velocity(A, B).reshaped(resolution, resolution));
 
     return 0;
 }
