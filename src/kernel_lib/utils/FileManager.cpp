@@ -2,9 +2,9 @@
 
 namespace kernel_lib {
     namespace utils {
-        FileManager::FileManager(const std::string& file_to_write)
+        FileManager::FileManager(const std::string& file)
         {
-            setFile(file_to_write);
+            setFile(file);
         }
 
         FileManager::FileManager() {}
@@ -21,18 +21,18 @@ namespace kernel_lib {
             return _path;
         }
 
-        void FileManager::setFile(const std::string& file_to_write)
+        void FileManager::setFile(const std::string& file)
         {
-            _path = path(file_to_write);
+            _path = path(file);
 
             if (!_path.empty()) {
                 if (!isDirectory(_path))
                     mkpath(_path);
             }
 
-            _name = filename(file_to_write);
+            _name = filename(file);
 
-            _open = true;
+            _open = false;
         }
     } // namespace utils
 } // namespace kernel_lib

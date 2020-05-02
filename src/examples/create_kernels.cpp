@@ -26,7 +26,7 @@ int main(int argc, char const* argv[])
     std::cout << "Square Exponential kernel (Spherical)" << std::endl;
     SumSqExp exp_spherical;
 
-    io_manager.setFile("rsc/exp_spherical.csv");
+    io_manager.setFile("rsc/kernel_eval/exp_spherical.csv");
     io_manager.write("X", X, "Y", Y, "F", exp_spherical(x_train, x_test).reshaped(resolution, resolution));
 
     // Squared Exponential kernel (Diagonal covariance)
@@ -37,7 +37,7 @@ int main(int argc, char const* argv[])
     params_diag << 1, 5;
     exp_diagonal.kernel().setCovariance(CovarianceType::DIAGONAL).setParameters(params_diag);
 
-    io_manager.setFile("rsc/exp_diagonal.csv");
+    io_manager.setFile("rsc/kernel_eval/exp_diagonal.csv");
     io_manager.write("X", X, "Y", Y, "F", exp_diagonal(x_train, x_test).reshaped(resolution, resolution));
 
     // Squared Exponential kernel (Full covariance)
@@ -50,35 +50,22 @@ int main(int argc, char const* argv[])
     Eigen::MatrixXd C = tools::createCovariance(direction, standard_dev);
     exp_full.kernel().setCovariance(CovarianceType::FULL).setParameters(C.reshaped(std::pow(dim, 2), 1));
 
-    io_manager.setFile("rsc/exp_full.csv");
+    io_manager.setFile("rsc/kernel_eval/exp_full.csv");
     io_manager.write("X", X, "Y", Y, "F", exp_full(x_train, x_test).reshaped(resolution, resolution));
 
     // Cosine kernel
     std::cout << "Cosine kernel" << std::endl;
     SumCosine cosine;
 
-    io_manager.setFile("rsc/cosine.csv");
+    io_manager.setFile("rsc/kernel_eval/cosine.csv");
     io_manager.write("X", X, "Y", Y, "F", cosine(x_train, x_test).reshaped(resolution, resolution));
 
     // Polynomial kernel
     std::cout << "Polynomial kernel" << std::endl;
     SumPolynomial polynomial;
 
-    io_manager.setFile("rsc/polynomial.csv");
+    io_manager.setFile("rsc/kernel_eval/polynomial.csv");
     io_manager.write("X", X, "Y", Y, "F", polynomial(x_train, x_test).reshaped(resolution, resolution));
-
-    // Squared Exponential Velocity Directed
-    std::cout << "Squared Exponential Velocity Directed kernel" << std::endl;
-    SumExpVelocityDirected exp_velocity;
-
-    Eigen::MatrixXd A(x_train.rows(), 2 * x_train.cols()), B(x_test.rows(), 2 * x_test.cols());
-    A << x_train, x_train;
-    B << x_test, x_test;
-
-    io_manager.setFile("rsc/exp_velocity.csv");
-
-    exp_velocity(A, B);
-    // io_manager.write("X", X, "Y", Y, "F", exp_velocity(A, B).reshaped(resolution, resolution));
 
     return 0;
 }

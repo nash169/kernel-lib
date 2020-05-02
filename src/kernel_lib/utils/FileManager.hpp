@@ -15,7 +15,7 @@ namespace kernel_lib {
         class FileManager {
         public:
             // Contructor
-            FileManager(const std::string& file_to_write);
+            FileManager(const std::string& file);
             FileManager();
 
             // Destroyer
@@ -26,27 +26,27 @@ namespace kernel_lib {
             std::string filePath() const;
 
             // Set file & path
-            void setFile(const std::string& file_to_write);
+            void setFile(const std::string& file);
 
             // Write file
             template <typename VarType>
             void write(VarType var)
             {
-                if (_open)
+                if (!_open)
                     _file.open(join(_path, _name), std::ios::out);
 
                 _file << var << std::endl;
 
                 _file.close();
-                _open = true;
+                _open = false;
             }
 
             template <typename VarType, typename... Args>
             void write(VarType var, Args... args)
             {
-                if (_open) {
+                if (!_open) {
                     _file.open(join(_path, _name), std::ios::out);
-                    _open = false;
+                    _open = true;
                 }
 
                 _file << var << "\n"
@@ -59,22 +59,22 @@ namespace kernel_lib {
             template <typename VarType>
             void append(VarType var)
             {
-                if (_open)
+                if (!_open)
                     _file.open(join(_path, _name), std::ios::out | std::ios::app);
 
                 _file << var << "\n"
                       << std::endl;
 
                 _file.close();
-                _open = true;
+                _open = false;
             }
 
             template <typename VarType, typename... Args>
             void append(VarType var, Args... args)
             {
-                if (_open) {
+                if (!_open) {
                     _file.open(join(_path, _name), std::ios::out | std::ios::app);
-                    _open = false;
+                    _open = true;
                 }
 
                 _file << var << std::endl;
@@ -86,11 +86,36 @@ namespace kernel_lib {
             template <typename VarType>
             VarType read()
             {
-                _file.open(join(_path, _name), std::ios::in);
-                // to finish
+                if (!_open)
+                    _file.open(join(_path, _name), std::ios::in);
+
+                std::string line;
+                std::vector<double> values;
+                uint rows = 0;
+
+                while (std::getline(_file, line)) {
+                    std::stringstream lineStream(line);
+                    std::string cell;
+                    while (std::getline(lineStream, cell, ' ')) {
+                        if (!cell.empty())
+                            values.push_back(std::stod(cell));
+                    }
+                    ++rows;
+                }
+
+                _file.close();
+                _open = false;
+
+                return Eigen::Map<const Eigen::Matrix<typename VarType::Scalar, VarType::RowsAtCompileTime, VarType::ColsAtCompileTime, Eigen::RowMajor>>(values.data(), rows, values.size() / rows);
             }
 
-            // For solving the problem of write Vec in sequence use static variable here
+            template <typename VarType>
+            VarType read(const std::string& file)
+            {
+                setFile(file);
+
+                return this->read<VarType>();
+            }
 
         protected:
             bool _open;
