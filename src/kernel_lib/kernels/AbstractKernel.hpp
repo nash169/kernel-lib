@@ -35,7 +35,7 @@ namespace kernel_lib {
             virtual Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const = 0;
 
             /* Parameters */
-            Eigen::VectorXd params()
+            Eigen::VectorXd params() const
             {
                 return this->parameters();
             }

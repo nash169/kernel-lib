@@ -62,8 +62,7 @@ namespace kernel_lib {
                 if (!_open)
                     _file.open(join(_path, _name), std::ios::out | std::ios::app);
 
-                _file << var << "\n"
-                      << std::endl;
+                _file << var << std::endl;
 
                 _file.close();
                 _open = false;
@@ -74,10 +73,12 @@ namespace kernel_lib {
             {
                 if (!_open) {
                     _file.open(join(_path, _name), std::ios::out | std::ios::app);
+                    _file << std::endl;
                     _open = true;
                 }
 
-                _file << var << std::endl;
+                _file << var << "\n"
+                      << std::endl;
 
                 append(args...);
             }

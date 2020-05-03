@@ -24,7 +24,7 @@ namespace kernel_lib {
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 size_t m_x = x.rows(), m_y = y.rows(), d = x.cols() / 2;
-                return _exp(x.block(0, 0, m_x, d), y.block(0, 0, m_y, d)).array() * tools::linearMap(_cosine(x.block(0, d, m_x, d), y.block(0, d, m_y, d)), std::cos(_angle_ref), 1, _upper_limit, 0).array().exp();
+                return _exp(x.block(0, 0, m_x, d), y.block(0, 0, m_y, d)).array() * (-tools::linearMap(_cosine(x.block(0, d, m_x, d), y.block(0, d, m_y, d)), std::cos(_angle_ref), 1, _upper_limit, 0)).array().exp();
             }
 
             /* Evaluate Gradient */
@@ -46,12 +46,21 @@ namespace kernel_lib {
             /* Parameters */
             Eigen::VectorXd parameters() const override
             {
-                Eigen::VectorXd params;
+                Eigen::VectorXd params(2);
+                params << _angle_ref, _exp.params();
 
                 return params;
             }
 
-            void setParameters(const Eigen::VectorXd& params) override {}
+            void setParameters(const Eigen::VectorXd& params) override
+            {
+                _angle_ref = params(0);
+                Eigen::VectorXd temp(1);
+                temp << params(1);
+                _exp.setParams(temp);
+
+                _upper_limit = 3 * params(1);
+            }
 
             Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {

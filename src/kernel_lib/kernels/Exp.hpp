@@ -24,7 +24,7 @@ namespace kernel_lib {
             PARAM_SCALAR(bool, inverse, false);
 
             // Parameters
-            PARAM_VECTOR(double, sigma, 5);
+            PARAM_VECTOR(double, sigma, 1);
         };
     } // namespace defaults
 
