@@ -43,7 +43,7 @@ int main(int argc, char const* argv[])
     // Calculate sigma and angle reference
     double scale = 2.5, max_d = (V_red.rowwise().norm().array() * dt.array()).maxCoeff(),
            sigma = scale * max_d,
-           angle_ref = M_PI / 6;
+           angle_ref = M_PI;
 
     // Velocity Directed Kernel
     ExpVelocityDirected k;

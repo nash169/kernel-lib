@@ -49,6 +49,7 @@ namespace kernel_lib {
                 return *this;
             }
 
+            /* Log exponential */
             Eigen::VectorXd log_kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 size_t index = 0, x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();

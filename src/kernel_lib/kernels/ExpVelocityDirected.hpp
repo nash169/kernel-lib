@@ -37,7 +37,7 @@ namespace kernel_lib {
                 size_t m_x = x.rows(), m_y = y.rows(), d = x.cols() / 2;
                 double sigma = _exp.params()(0);
 
-                return (_exp.log_kernel(x.block(0, 0, m_x, d), y.block(0, 0, m_y, d)).array() - tools::linearMap(_cosine(x.block(0, d, m_x, d), y.block(0, d, m_y, d)), std::cos(_angle_ref), 1, 3 * sigma, 0).array().pow(2) * 0.5 / sigma).exp();
+                return (_exp.log_kernel(x.block(0, 0, m_x, d), y.block(0, 0, m_y, d)).array() - tools::linearMap(_cosine(x.block(0, d, m_x, d), y.block(0, d, m_y, d)), std::cos(_angle_ref), 1, 3 * sigma, 0).array().pow(2) * 0.5 / std::pow(sigma, 2)).exp();
             }
 
             Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
