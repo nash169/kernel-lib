@@ -17,13 +17,33 @@ namespace kernel_lib {
         public:
             Polynomial() : _const(Params::kernel_poly::constant()), _degree(Params::kernel_poly::degree()) {}
 
-            /* Evaluate Kernel */
+            Eigen::VectorXd dotProduct(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                size_t index = 0, x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
+                REQUIRED_DIMENSION(n_features == y.cols(), "Y must have the same dimension of X")
+
+                Eigen::VectorXd dot_prod(x_samples * y_samples);
+
+                for (size_t i = 0; i < x_samples; i++) {
+                    for (size_t j = 0; j < y_samples; j++) {
+                        dot_prod(index) = x.row(i) * y.row(j).transpose() + _const;
+                        index++;
+                    }
+                }
+
+                return dot_prod;
+            }
+
+        protected:
+            double _const;
+
+            int _degree;
+
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 return dotProduct(x, y).array().pow(_degree);
             }
 
-            /* Evaluate Gradient */
             Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 size_t index = 0, x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
@@ -41,7 +61,6 @@ namespace kernel_lib {
                 return _degree * dotProduct(x, y).array().pow(_degree - 1);
             }
 
-            /* Evaluate Hessian */
             Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd hess;
@@ -49,7 +68,6 @@ namespace kernel_lib {
                 return hess;
             }
 
-            /* Parameters */
             Eigen::VectorXd parameters() const override
             {
                 Eigen::VectorXd params;
@@ -69,27 +87,6 @@ namespace kernel_lib {
             size_t sizeParameters() const override
             {
                 return 0;
-            }
-
-        protected:
-            double _const;
-            int _degree;
-
-            Eigen::VectorXd dotProduct(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
-            {
-                size_t index = 0, x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
-                REQUIRED_DIMENSION(n_features == y.cols(), "Y must have the same dimension of X")
-
-                Eigen::VectorXd dot_prod(x_samples * y_samples);
-
-                for (size_t i = 0; i < x_samples; i++) {
-                    for (size_t j = 0; j < y_samples; j++) {
-                        dot_prod(index) = x.row(i) * y.row(j).transpose() + _const;
-                        index++;
-                    }
-                }
-
-                return dot_prod;
             }
         };
     } // namespace kernels

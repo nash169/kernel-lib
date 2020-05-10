@@ -4,13 +4,31 @@
 #include "kernel_lib/kernels/AbstractKernel.hpp"
 
 namespace kernel_lib {
+    namespace defaults {
+        struct kernel_cos {
+            // Settings
+            PARAM_SCALAR(double, nan_value, 1);
+        };
+    } // namespace defaults
+
     namespace kernels {
         template <typename Params>
         class Cosine : public AbstractKernel {
         public:
-            Cosine() {}
+            Cosine() : _nan_value(Params::kernel_cos::nan_value())
+            {
+            }
 
-            /* Evaluate Kernel */
+            Cosine& setNan(double nan_value)
+            {
+                _nan_value = nan_value;
+
+                return *this;
+            }
+
+        protected:
+            double _nan_value;
+
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 size_t index = 0, x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
@@ -22,7 +40,7 @@ namespace kernel_lib {
                     for (size_t j = 0; j < y_samples; j++) {
                         ker.row(index) = x.row(i) * y.row(j).transpose() / (x.row(i).norm() * y.row(j).norm());
                         if (std::isnan(ker(index)))
-                            ker(index) = 1;
+                            ker(index) = _nan_value;
                         index++;
                     }
                 }
@@ -30,7 +48,6 @@ namespace kernel_lib {
                 return ker;
             }
 
-            /* Evaluate Gradient */
             Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd grad;
@@ -38,7 +55,6 @@ namespace kernel_lib {
                 return grad;
             }
 
-            /* Evaluate Hessian */
             Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd hess;
@@ -46,7 +62,6 @@ namespace kernel_lib {
                 return hess;
             }
 
-            /* Parameters */
             Eigen::VectorXd parameters() const override
             {
                 Eigen::VectorXd params;

@@ -14,7 +14,7 @@ int main(int argc, char const* argv[])
     Eigen::VectorXd dt = io_manager.read<Eigen::MatrixXd>("rsc/icub/dtime_icub.csv");
 
     // Reduce dimension
-    size_t dim = X.cols(), num_samples = X.rows();
+    size_t dim = 15, num_samples = X.rows();
 
     Eigen::MatrixXd X_red = X.block(0, 0, num_samples, dim),
                     V_red = V.block(0, 0, num_samples, dim);
@@ -36,18 +36,21 @@ int main(int argc, char const* argv[])
         V_red.row(i) = (V_red.row(i) - V_mean.transpose()).array() / V_std.transpose().array();
     }
 
-    // Calculate sigma
-    double scale = 2.5, max_d = (V_red.rowwise().norm().array() * dt.array()).maxCoeff(), sigma = scale * max_d;
-
+    // Dataset
     Eigen::MatrixXd Dataset(num_samples, 2 * dim);
     Dataset << X_red, V_red;
 
-    ExpVelocityDirected k;
-    Eigen::VectorXd params(2);
-    params << M_PI / 6, sigma;
-    k.setParams(params);
+    // Calculate sigma and angle reference
+    double scale = 2.5, max_d = (V_red.rowwise().norm().array() * dt.array()).maxCoeff(),
+           sigma = scale * max_d,
+           angle_ref = M_PI / 6;
 
-    // SqExp k;
+    // Velocity Directed Kernel
+    ExpVelocityDirected k;
+    k.setAngle(angle_ref).setParams(tools::makeVector(sigma));
+
+    // Exp Kernel
+    // Exp k;
     // Eigen::VectorXd params(1);
     // params << sigma;
     // k.setParams(params);

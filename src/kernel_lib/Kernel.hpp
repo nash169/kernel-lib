@@ -14,6 +14,7 @@
 #include "kernel_lib/utils/Timer.hpp"
 
 /* Tools */
+#include "kernel_lib/tools/helper.hpp"
 #include "kernel_lib/tools/math.hpp"
 
 namespace kernel_lib {
@@ -23,6 +24,9 @@ namespace kernel_lib {
         };
 
         struct kernel_poly : public defaults::kernel_poly {
+        };
+
+        struct kernel_cos : public defaults::kernel_cos {
         };
 
         struct kernel_exp_vel : public defaults::kernel_exp_vel {
@@ -36,8 +40,8 @@ namespace kernel_lib {
      * @default parameters defintion for kernel and expansion
      */
 
-    using SqExp = kernels::Exp<ParamsDefaults>; // typedef kernel::Rbf<ParamsRbfSpherical> RbfSpherical;
-    using SumSqExp = utils::Expansion<ParamsDefaults, SqExp>; // template <typename Params> using SumRbf = Expansion<Params, RbfSpherical>;
+    using Exp = kernels::Exp<ParamsDefaults>; // typedef kernel::Rbf<ParamsRbfSpherical> RbfSpherical;
+    using SumExp = utils::Expansion<ParamsDefaults, Exp>; // template <typename Params> using SumRbf = Expansion<Params, RbfSpherical>;
 
     /** Cosine kernel
      * @default parameters defintion for kernel and expansion

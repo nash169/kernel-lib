@@ -10,7 +10,7 @@ namespace kernel_lib {
         public:
             ExpGradientDirected() {}
 
-            /* Evaluate Kernel */
+        protected:
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::VectorXd ker;
@@ -18,7 +18,6 @@ namespace kernel_lib {
                 return ker;
             }
 
-            /* Evaluate Gradient */
             Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd grad;
@@ -26,7 +25,6 @@ namespace kernel_lib {
                 return grad;
             }
 
-            /* Evaluate Hessian */
             Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd hess;
@@ -34,7 +32,6 @@ namespace kernel_lib {
                 return hess;
             }
 
-            /* Parameters */
             Eigen::VectorXd parameters() const override
             {
                 Eigen::VectorXd params;

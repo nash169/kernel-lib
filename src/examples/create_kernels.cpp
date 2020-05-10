@@ -24,31 +24,31 @@ int main(int argc, char const* argv[])
 
     // Squared Exponential kernel (Spherical covariance)
     std::cout << "Square Exponential kernel (Spherical)" << std::endl;
-    SumSqExp exp_spherical;
+    SumExp exp_spherical;
 
     io_manager.setFile("rsc/kernel_eval/exp_spherical.csv");
     io_manager.write("X", X, "Y", Y, "F", exp_spherical(x_train, x_test).reshaped(resolution, resolution));
 
     // Squared Exponential kernel (Diagonal covariance)
     std::cout << "Square Exponential kernel (Diagonal)" << std::endl;
-    SumSqExp exp_diagonal;
+    SumExp exp_diagonal;
 
     Eigen::VectorXd params_diag(2);
     params_diag << 1, 5;
-    exp_diagonal.kernel().setCovariance(CovarianceType::DIAGONAL).setParameters(params_diag);
+    exp_diagonal.kernel().setCovariance(CovarianceType::DIAGONAL).setParams(params_diag);
 
     io_manager.setFile("rsc/kernel_eval/exp_diagonal.csv");
     io_manager.write("X", X, "Y", Y, "F", exp_diagonal(x_train, x_test).reshaped(resolution, resolution));
 
     // Squared Exponential kernel (Full covariance)
     std::cout << "Square Exponential kernel (Full)" << std::endl;
-    SumSqExp exp_full;
+    SumExp exp_full;
 
     Eigen::VectorXd direction(2), standard_dev(2);
     direction << 1, 1;
     standard_dev << 2, 5;
     Eigen::MatrixXd C = tools::createCovariance(direction, standard_dev);
-    exp_full.kernel().setCovariance(CovarianceType::FULL).setParameters(C.reshaped(std::pow(dim, 2), 1));
+    exp_full.kernel().setCovariance(CovarianceType::FULL).setParams(C.reshaped(std::pow(dim, 2), 1));
 
     io_manager.setFile("rsc/kernel_eval/exp_full.csv");
     io_manager.write("X", X, "Y", Y, "F", exp_full(x_train, x_test).reshaped(resolution, resolution));

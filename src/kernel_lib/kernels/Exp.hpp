@@ -34,51 +34,6 @@ namespace kernel_lib {
         public:
             Exp() : _sigma(Params::kernel_exp::sigma()), _type(Params::kernel_exp::type()), _inverse(Params::kernel_exp::inverse()) {}
 
-            /* Evaluate Kernel */
-            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
-            {
-                return log_kernel(x, y).array().exp();
-            }
-
-            /* Evaluate Gradient */
-            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
-            {
-                Eigen::MatrixXd grad;
-
-                return grad;
-            }
-
-            /* Evaluate Hessian */
-            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
-            {
-                Eigen::MatrixXd hess;
-
-                return hess;
-            }
-
-            /* Parameters */
-            Eigen::VectorXd parameters() const override
-            {
-                return _sigma;
-            }
-
-            void setParameters(const Eigen::VectorXd& params) override
-            {
-                _sigma = params;
-            }
-
-            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
-            {
-                Eigen::MatrixXd grad_params;
-
-                return grad_params;
-            }
-
-            size_t sizeParameters() const override
-            {
-                return _sigma.rows();
-            }
-
             /* Settings */
             Exp& setCovariance(const Covariance& cov)
             {
@@ -93,13 +48,6 @@ namespace kernel_lib {
 
                 return *this;
             }
-
-        protected:
-            Eigen::MatrixXd _sigma;
-
-            Covariance _type;
-
-            bool _inverse;
 
             Eigen::VectorXd log_kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
@@ -160,6 +108,54 @@ namespace kernel_lib {
                 }
 
                 return log_k;
+            }
+
+        protected:
+            Eigen::MatrixXd _sigma;
+
+            Covariance _type;
+
+            bool _inverse;
+
+            Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
+            {
+                return log_kernel(x, y).array().exp();
+            }
+
+            Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
+            {
+                Eigen::MatrixXd grad;
+
+                return grad;
+            }
+
+            Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
+            {
+                Eigen::MatrixXd hess;
+
+                return hess;
+            }
+
+            Eigen::VectorXd parameters() const override
+            {
+                return _sigma;
+            }
+
+            void setParameters(const Eigen::VectorXd& params) override
+            {
+                _sigma = params;
+            }
+
+            Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
+            {
+                Eigen::MatrixXd grad_params;
+
+                return grad_params;
+            }
+
+            size_t sizeParameters() const override
+            {
+                return _sigma.rows();
             }
         };
     } // namespace kernels

@@ -17,17 +17,29 @@ namespace kernel_lib {
         public:
             ExpVelocityDirected() : _exp(), _cosine(), _angle_ref(Params::kernel_exp_vel::angle_ref())
             {
-                _upper_limit = 3 * Params::kernel_exp::sigma()(0);
             }
 
-            /* Evaluate Kernel */
+            ExpVelocityDirected& setAngle(double angle_ref)
+            {
+                _angle_ref = angle_ref;
+
+                return *this;
+            }
+
+        protected:
+            double _angle_ref;
+
+            Exp<Params> _exp;
+            Cosine<Params> _cosine;
+
             Eigen::VectorXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 size_t m_x = x.rows(), m_y = y.rows(), d = x.cols() / 2;
-                return _exp(x.block(0, 0, m_x, d), y.block(0, 0, m_y, d)).array() * (-tools::linearMap(_cosine(x.block(0, d, m_x, d), y.block(0, d, m_y, d)), std::cos(_angle_ref), 1, _upper_limit, 0)).array().exp();
+                double sigma = _exp.params()(0);
+
+                return (_exp.log_kernel(x.block(0, 0, m_x, d), y.block(0, 0, m_y, d)).array() - tools::linearMap(_cosine(x.block(0, d, m_x, d), y.block(0, d, m_y, d)), std::cos(_angle_ref), 1, 3 * sigma, 0).array().pow(2) * 0.5 / sigma).exp();
             }
 
-            /* Evaluate Gradient */
             Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd grad;
@@ -35,7 +47,6 @@ namespace kernel_lib {
                 return grad;
             }
 
-            /* Evaluate Hessian */
             Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
                 Eigen::MatrixXd hess;
@@ -43,23 +54,14 @@ namespace kernel_lib {
                 return hess;
             }
 
-            /* Parameters */
             Eigen::VectorXd parameters() const override
             {
-                Eigen::VectorXd params(2);
-                params << _angle_ref, _exp.params();
-
-                return params;
+                return _exp.params();
             }
 
             void setParameters(const Eigen::VectorXd& params) override
             {
-                _angle_ref = params(0);
-                Eigen::VectorXd temp(1);
-                temp << params(1);
-                _exp.setParams(temp);
-
-                _upper_limit = 3 * params(1);
+                _exp.setParams(params);
             }
 
             Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
@@ -71,14 +73,8 @@ namespace kernel_lib {
 
             size_t sizeParameters() const override
             {
-                return _exp.sizeParameters() + _cosine.sizeParameters();
+                return _exp.sizeParams() + _cosine.sizeParams();
             }
-
-        protected:
-            double _angle_ref, _upper_limit;
-
-            Exp<Params> _exp;
-            Cosine<Params> _cosine;
         };
     } // namespace kernels
 } // namespace kernel_lib
