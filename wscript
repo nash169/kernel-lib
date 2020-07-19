@@ -32,8 +32,8 @@ def configure(cfg):
     # OSX/Mac uses .dylib and GNU/Linux .so
     cfg.env.SUFFIX = "dylib" if cfg.env["DEST_OS"] == "darwin" else "so"
 
-    # Load compiler configuration
-    cfg.load("compiler_cxx")
+    # Load compiler configuration and generate clangd flags
+    cfg.load("compiler_cxx clang_compilation_database")
 
     # Load tools configuration
     cfg.load("flags eigen corrade", tooldir="waf_tools")
