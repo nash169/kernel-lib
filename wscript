@@ -20,8 +20,12 @@ def options(opt):
     opt.load("flags eigen corrade", tooldir="waf_tools")
 
     # Add options
-    opt.add_option("--shared", action="store_true", help="build shared library")
-    opt.add_option("--static", action="store_true", help="build static library")
+    opt.add_option("--shared",
+                   action="store_true",
+                   help="build shared library")
+    opt.add_option("--static",
+                   action="store_true",
+                   help="build static library")
 
 
 def configure(cfg):
@@ -52,21 +56,19 @@ def build(bld):
     includes = []
     includes_path = "src"
     for root, dirnames, filenames in os.walk(
-        osp.join(bld.path.abspath(), includes_path)
-    ):
+            osp.join(bld.path.abspath(), includes_path)):
         for filename in fnmatch.filter(filenames, "*.hpp"):
             includes.append(os.path.join(root, filename))
-    includes = [f[len(bld.path.abspath()) + 1 :] for f in includes]
+    includes = [f[len(bld.path.abspath()) + 1:] for f in includes]
 
     # Sources
     sources = []
     sources_path = "src/kernel_lib"
     for root, dirnames, filenames in os.walk(
-        osp.join(bld.path.abspath(), sources_path)
-    ):
+            osp.join(bld.path.abspath(), sources_path)):
         for filename in fnmatch.filter(filenames, "*.cpp"):
             sources.append(os.path.join(root, filename))
-    sources = " ".join([f[len(bld.path.abspath()) + 1 :] for f in sources])
+    sources = " ".join([f[len(bld.path.abspath()) + 1:] for f in sources])
 
     # Build library
     if bld.options.shared:
@@ -103,9 +105,8 @@ def build(bld):
 
     # Install libraries
     if bld.env["lib_type"] == "cxxstlib":
-        bld.install_files(
-            "${PREFIX}/lib", blddir + "/lib" + bld.get_env()["libname"] + ".a"
-        )
+        bld.install_files("${PREFIX}/lib",
+                          blddir + "/lib" + bld.get_env()["libname"] + ".a")
     else:
         bld.install_files(
             "${PREFIX}/lib",

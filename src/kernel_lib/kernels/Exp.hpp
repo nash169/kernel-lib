@@ -3,6 +3,7 @@
 
 #include "kernel_lib/kernels/AbstractKernel.hpp"
 #include <Corrade/Containers/EnumSet.h>
+// #include <tbb/tbb.h>
 
 namespace kernel_lib {
     enum class CovarianceType : unsigned int {
@@ -62,11 +63,12 @@ namespace kernel_lib {
 
                     double sig = -0.5 / std::pow(_sigma(0, 0), 2);
 
+                    // tbb::parallel_for(size_t(0), x_samples, [&](size_t i) { tbb::parallel_for(size_t(0), y_samples, [&](size_t j) { log_k(i * y_samples + j) = (x.row(i) - y.row(j)).squaredNorm() * sig; }); });
+
+#pragma omp parallel for collapse(2)
                     for (size_t i = 0; i < x_samples; i++) {
-                        for (size_t j = 0; j < y_samples; j++) {
-                            log_k(index) = (x.row(i) - y.row(j)).squaredNorm() * sig;
-                            index++;
-                        }
+                        for (size_t j = 0; j < y_samples; j++)
+                            log_k(i * y_samples + j) = (x.row(i) - y.row(j)).squaredNorm() * sig;
                     }
                 }
                 else if (_type & CovarianceType::DIAGONAL) {
