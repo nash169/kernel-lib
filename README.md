@@ -69,13 +69,29 @@ If you want to make clean installation
 ```
 
 #### Compilation options
+In order to set the desired compiler define the environment variable CXX=<g++,clang++,icpc> (gnu, clang and intel compiler respectively).
+
 It is highly recommended to compile with AVX support
 ```sh
 waf (./waf) configure --optional-flags
 ```
+Activate multi-threading outside EIGEN
+```sh
+waf (./waf) configure --parallel
+```
+Compile static library (default option)
+```sh
+waf (./waf) configure --static
+```
+Compile shared library
+```sh
+waf (./waf) configure --shared
+```
+
+##### EIGEN derived options
 Enable OPENMP multi-threading
 ```sh
-waf (./waf) configure --multi-threading
+waf (./waf) configure --with-openmp
 ```
 Enable LAPACK
 ```sh
@@ -93,12 +109,15 @@ Set MKL multi-threading
 ```sh
 waf (./waf) configure --mkl-threading=<sequential|openmp|tbb>
 ```
-By default MKL uses `sequential` option. If you activate `openmp` this includes `--multi-threading` that will be deactivated in this case. In addition if you choose OpenMP multi-threading it is possible select between the GNU (default), `gnu`, or Intel, `intel`, version through `--mkl-openmp` option. 
-Suggested configuration
+
+##### Suggested configuration
 ```sh
-waf (./waf) configure --optional-flags --with-lapack --with-blas --with-mkl --mkl-threading=tbb
+waf (./waf) configure --optional-flags --parallel --with-lapack --with-blas --with-mkl --mkl-threading=tbb
 ```
-In order to set the desired compiler define the environment variable CXX=<g++,clang++,icpc> (gnu, clang and intel compiler respectively).
+
+##### MKL derived options
+By default MKL uses `sequential` option. If you choose OpenMP multi-threading it is possible select between the GNU (default), `gnu`, or Intel, `intel`, version through `--mkl-openmp` option.
+
 
 ### Examples
 ```sh

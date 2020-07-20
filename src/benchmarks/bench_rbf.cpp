@@ -5,9 +5,25 @@ using namespace kernel_lib;
 
 struct Params {
     struct kernel_exp : public defaults::kernel_exp {
-        PARAM_SCALAR(Covariance, type, CovarianceType::SPHERICAL); // CovarianceType::FULL
-        PARAM_SCALAR(bool, inverse, false);
-        PARAM_VECTOR(double, sigma, 1); // 14.5, -10.5, -10.5, 14.5 -- 0.145, 0.105, 0.105, 0.145
+        // Spherical
+        // PARAM_SCALAR(Covariance, type, CovarianceType::SPHERICAL);
+        // PARAM_SCALAR(bool, inverse, false);
+        // PARAM_VECTOR(double, sigma, 1);
+        
+        // Diagonal
+        // PARAM_SCALAR(Covariance, type, CovarianceType::DIAGONAL);
+        // PARAM_SCALAR(bool, inverse, false);
+        // PARAM_VECTOR(double, sigma, 3, 2);
+
+        // Full
+        // PARAM_SCALAR(Covariance, type, CovarianceType::FULL);
+        // PARAM_SCALAR(bool, inverse, false);
+        // PARAM_VECTOR(double, sigma, 14.5, -10.5, -10.5, 14.5);
+        
+        // Full inverse
+        PARAM_SCALAR(Covariance, type, CovarianceType::FULL);
+        PARAM_SCALAR(bool, inverse, true);    
+        PARAM_VECTOR(double, sigma, 0.145, 0.105, 0.105, 0.145);
     };
 };
 

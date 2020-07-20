@@ -76,11 +76,10 @@ namespace kernel_lib {
 
                     Eigen::Array<double, 1, Eigen::Dynamic> sig = -0.5 * _sigma.transpose().array().pow(2).inverse();
 
+#pragma omp parallel for collapse(2)
                     for (size_t i = 0; i < x_samples; i++) {
-                        for (size_t j = 0; j < y_samples; j++) {
-                            log_k(index) = ((x.row(i) - y.row(j)).array().square() * sig).sum();
-                            index++;
-                        }
+                        for (size_t j = 0; j < y_samples; j++)
+                            log_k(i * y_samples + j) = ((x.row(i) - y.row(j)).array().square() * sig).sum();
                     }
                 }
                 else if (_type & CovarianceType::FULL) {
@@ -88,12 +87,12 @@ namespace kernel_lib {
 
                     if (_inverse) {
                         const Eigen::MatrixXd& sig = _sigma.reshaped(n_features, n_features) * -0.5;
-
+                        
+#pragma omp parallel for collapse(2)
                         for (size_t i = 0; i < x_samples; i++) {
                             for (size_t j = 0; j < y_samples; j++) {
-                                const Eigen::VectorXd& v = x.row(i) - y.row(j);
-                                log_k(index) = v.transpose() * sig * v;
-                                index++;
+                                Eigen::VectorXd v = x.row(i) - y.row(j);
+                                log_k(i * y_samples + j) = v.transpose() * sig * v;
                             }
                         }
                     }
@@ -101,11 +100,10 @@ namespace kernel_lib {
                         // Why this? const and reference?
                         const Chol::Traits::MatrixL& L = tools::cholesky(_sigma.reshaped(n_features, n_features));
 
+#pragma omp parallel for collapse(2)
                         for (size_t i = 0; i < x_samples; i++) {
-                            for (size_t j = 0; j < y_samples; j++) {
-                                log_k(index) = L.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5;
-                                index++;
-                            }
+                            for (size_t j = 0; j < y_samples; j++)
+                                log_k(i * y_samples + j) = L.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5;
                         }
                     }
                 }
