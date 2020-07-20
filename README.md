@@ -8,7 +8,6 @@ Here is a list of features to implement or unsolved issues:
 - add methods for setting params;
 - decide if memorizing kernel evaluation within the kernel class;
 - check return value within if statement;
-- check Eigen flags for MKL.
 
 ### Authors/Maintainers
 
@@ -87,7 +86,6 @@ Compile shared library
 ```sh
 waf (./waf) configure --shared
 ```
-
 ##### EIGEN derived options
 Enable OPENMP multi-threading
 ```sh
@@ -105,19 +103,15 @@ Enable MKL
 ```sh
 waf (./waf) configure --with-mkl
 ```
-Set MKL multi-threading
+##### MKL derived options
+By default MKL uses `sequential` option. If you choose OpenMP multi-threading it is possible select between the GNU (default), `gnu`, or Intel, `intel`, version through `--mkl-openmp` option.
 ```sh
-waf (./waf) configure --mkl-threading=<sequential|openmp|tbb>
+waf (./waf) configure --mkl-threading=<sequential|openmp|tbb> -mkl-openmp=<gnu|intel>
 ```
-
 ##### Suggested configuration
 ```sh
 waf (./waf) configure --optional-flags --parallel --with-lapack --with-blas --with-mkl --mkl-threading=tbb
 ```
-
-##### MKL derived options
-By default MKL uses `sequential` option. If you choose OpenMP multi-threading it is possible select between the GNU (default), `gnu`, or Intel, `intel`, version through `--mkl-openmp` option.
-
 
 ### Examples
 ```sh
