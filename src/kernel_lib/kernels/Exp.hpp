@@ -87,7 +87,7 @@ namespace kernel_lib {
 
                     if (_inverse) {
                         const Eigen::MatrixXd& sig = _sigma.reshaped(n_features, n_features) * -0.5;
-                        
+
 #pragma omp parallel for collapse(2)
                         for (size_t i = 0; i < x_samples; i++) {
                             for (size_t j = 0; j < y_samples; j++) {
