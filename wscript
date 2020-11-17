@@ -17,7 +17,7 @@ def options(opt):
     opt.load("compiler_cxx")
 
     # Load tools options
-    opt.load("flags eigen corrade", tooldir="waf_tools")
+    opt.load("flags eigen corrade utils_cpp", tooldir="waf_tools")
 
     # Add options
     opt.add_option("--shared",
@@ -41,11 +41,15 @@ def configure(cfg):
     cfg.env.SUFFIX = "dylib" if cfg.env["DEST_OS"] == "darwin" else "so"
 
     # Load compiler configuration and generate clangd flags
-    cfg.load("compiler_cxx")  # clang_compilation_database")
+    cfg.load("compiler_cxx")  # cfg.load("clang_compilation_database")
+
+    # Define require libraries
+    cfg.get_env()["requires"] += ["EIGEN", "CORRADE"]
 
     # Load tools configuration
-    cfg.load("flags eigen corrade", tooldir="waf_tools")
+    cfg.load("flags eigen corrade utils_cpp", tooldir="waf_tools")
 
+    # Activate OPENMP if parellel option is active
     if cfg.options.parallel:
         cfg.load("openmp", tooldir="waf_tools")
 
@@ -66,7 +70,7 @@ def build(bld):
     # Includes
     includes = []
     includes_path = "src"
-    for root, dirnames, filenames in os.walk(
+    for root, _, filenames in os.walk(
             osp.join(bld.path.abspath(), includes_path)):
         for filename in fnmatch.filter(filenames, "*.hpp"):
             includes.append(os.path.join(root, filename))
@@ -75,7 +79,7 @@ def build(bld):
     # Sources
     sources = []
     sources_path = "src/kernel_lib"
-    for root, dirnames, filenames in os.walk(
+    for root, _, filenames in os.walk(
             osp.join(bld.path.abspath(), sources_path)):
         for filename in fnmatch.filter(filenames, "*.cpp"):
             sources.append(os.path.join(root, filename))

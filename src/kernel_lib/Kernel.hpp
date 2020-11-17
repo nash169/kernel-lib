@@ -10,8 +10,6 @@
 
 /* Utils */
 #include "kernel_lib/utils/Expansion.hpp"
-#include "kernel_lib/utils/FileManager.hpp"
-#include "kernel_lib/utils/Timer.hpp"
 
 /* Tools */
 #include "kernel_lib/tools/helper.hpp"

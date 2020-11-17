@@ -11,20 +11,24 @@ def build(bld):
 
     # Get source files
     sources = []
-    for root, dirnames, filenames in os.walk(bld.path.abspath()):
+    for root, _, filenames in os.walk(bld.path.abspath()):
         for filename in fnmatch.filter(filenames, "*.cpp"):
             sources.append(os.path.join(root, filename))
+    sources = [f[len(bld.path.abspath()) + 1:] for f in sources]
 
-    sources = [f[len(bld.path.abspath()) + 1 :] for f in sources]
+    # Define additional required libraries for the benchmarks
+    bench_required = {"bench_rbf.cpp": "UTILSCPP"}
 
-    for example in sources:
-        bld.program(
-            features="cxx",
-            install_path=None,
-            source=example,
-            includes=includes_path,
-            uselib=bld.env["libs"],
-            use=bld.env["libname"],
-            cxxflags=bld.get_env()["CXXFLAGS"],
-            target=example[: len(example) - len(".cpp")],
-        )
+    # Compile all the benchmarks
+    for bench in sources:
+        if bench in bench_required and bench_required[bench] in bld.env["libs"]:
+            bld.program(
+                features="cxx",
+                install_path=None,
+                source=bench,
+                includes=includes_path,
+                uselib=bld.env["libs"],
+                use=bld.env["libname"],
+                cxxflags=bld.get_env()["CXXFLAGS"],
+                target=bench[: len(bench) - len(".cpp")],
+            )

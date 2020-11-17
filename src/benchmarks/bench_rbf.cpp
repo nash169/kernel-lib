@@ -1,5 +1,8 @@
 #include <iostream>
+
 #include <kernel_lib/Kernel.hpp>
+
+#include <utils_cpp/UtilsCpp.hpp>
 
 using namespace kernel_lib;
 
@@ -36,7 +39,7 @@ int main(int argc, char const* argv[])
 
     Kernel_t k;
     {
-        utils::Timer timer;
+        utils_cpp::Timer timer;
         k.log_kernel(X, X);
     }
 

@@ -1,5 +1,8 @@
 #include <iostream>
+
 #include <kernel_lib/Kernel.hpp>
+
+#include <utils_cpp/UtilsCpp.hpp>
 
 using namespace kernel_lib;
 
@@ -20,7 +23,7 @@ int main(int argc, char const* argv[])
     x_train << 50, 50;
 
     // File manager
-    utils::FileManager io_manager;
+    utils_cpp::FileManager io_manager;
 
     // Squared Exponential kernel (Spherical covariance)
     std::cout << "Square Exponential kernel (Spherical)" << std::endl;
