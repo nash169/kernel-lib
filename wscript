@@ -65,7 +65,7 @@ def configure(cfg):
 
 def build(bld):
     # Library name
-    bld.get_env()["libname"] = "kernelLib"
+    bld.get_env()["libname"] = "Kernel"
 
     # Includes
     includes = []
