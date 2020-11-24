@@ -32,7 +32,7 @@ struct Params {
 
 int main(int argc, char const* argv[])
 {
-    size_t dim = 2, num_samples = 40000;
+    size_t dim = 2, num_samples = 30000;
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_samples, dim);
 
     using Kernel_t = kernels::Exp<Params>;

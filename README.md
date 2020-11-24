@@ -76,7 +76,7 @@ waf (./waf) configure --optional-flags
 ```
 Activate multi-threading outside EIGEN
 ```sh
-waf (./waf) configure --parallel
+waf (./waf) configure --multi-threading
 ```
 Compile static library (default option)
 ```sh
@@ -89,19 +89,19 @@ waf (./waf) configure --shared
 ##### EIGEN derived options
 Enable OPENMP multi-threading
 ```sh
-waf (./waf) configure --with-openmp
+waf (./waf) configure --eigen-openmp
 ```
 Enable LAPACK
 ```sh
-waf (./waf) configure --with-lapack
+waf (./waf) configure --eigen-lapack
 ```
 Enable BLAS
 ```sh
-waf (./waf) configure --with-blas
+waf (./waf) configure --eigen-blas
 ```
 Enable MKL
 ```sh
-waf (./waf) configure --with-mkl
+waf (./waf) configure --eigen-mkl
 ```
 ##### MKL derived options
 By default MKL uses `sequential` option. If you choose OpenMP multi-threading it is possible select between the GNU (default), `gnu`, or Intel, `intel`, version through `--mkl-openmp` option.
@@ -110,7 +110,7 @@ waf (./waf) configure --mkl-threading=<sequential|openmp|tbb> -mkl-openmp=<gnu|i
 ```
 ##### Suggested configuration
 ```sh
-waf (./waf) configure --optional-flags --parallel --with-lapack --with-blas --with-mkl --mkl-threading=tbb
+waf (./waf) configure --optional-flags --multi-threading --eigen-openmp --eigen-lapack --eigen-blas --eigen-mkl --mkl-threading=tbb
 ```
 
 ### Examples

@@ -29,10 +29,10 @@ def options(opt):
                    help="build static library")
 
     opt.add_option(
-        "--parallel",
+        "--multi-threading",
         action="store_true",
         help="enable multi-threading",
-        dest="parallel",
+        dest="multi_threading",
     )
 
 
@@ -50,7 +50,7 @@ def configure(cfg):
     cfg.load("flags eigen corrade utils_cpp", tooldir="waf_tools")
 
     # Activate OPENMP if parellel option is active
-    if cfg.options.parallel:
+    if cfg.options.multi_threading:
         cfg.load("openmp", tooldir="waf_tools")
 
     # Remove duplicates
