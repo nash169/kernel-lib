@@ -10,7 +10,6 @@ Here is a list of features to implement or unsolved issues:
 - check return value within if statement;
 
 ### Authors/Maintainers
-
 - Bernardo Fichera (bernardo.fichera@epfl.ch)
 
 ### Available Kernels
@@ -45,7 +44,7 @@ sudo pacman -S waf
 ```
 For other distros it is better to download the latest version from the official website and move the executable in the library repo
 ```sh
-wget 'https://waf.io/waf-2.0.19'
+wget 'https://waf.io/waf-2.0.21'
 mv waf-2.0.19waf-2.0.19 waf && mv waf /path/to/kernel-lib
 cd /path/to/kernel-lib
 chmod +x waf
