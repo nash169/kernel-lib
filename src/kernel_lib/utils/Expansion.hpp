@@ -48,15 +48,19 @@ namespace kernel_lib {
                 }
             }
 
-            void setReference(const Eigen::MatrixXd& reference, bool reference_first = true)
+            Expansion& setReference(const Eigen::MatrixXd& reference, bool reference_first = true)
             {
                 _reference = reference;
                 _reference_first = reference_first;
+
+                return *this;
             }
 
-            void setWeights(const Eigen::VectorXd& weights)
+            Expansion& setWeights(const Eigen::VectorXd& weights)
             {
                 _weight = weights;
+
+                return *this;
             }
 
             Kernel& kernel()
