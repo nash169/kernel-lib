@@ -1,7 +1,7 @@
 #ifndef KERNELLIB_EXPANSION_UTILS_HPP
 #define KERNELLIB_EXPANSION_UTILS_HPP
 
-#include "kernel_lib/kernels/Exp.hpp"
+#include "kernel_lib/kernels/Rbf.hpp"
 
 namespace kernel_lib {
     namespace defaults {
@@ -11,7 +11,7 @@ namespace kernel_lib {
     } // namespace defaults
 
     namespace utils {
-        template <typename Params, typename Kernel = kernels::Exp<Params>>
+        template <typename Params, typename Kernel = kernels::Rbf<Params>>
         class Expansion {
         public:
             Expansion() : _kernel(), _reference_first(Params::expansion::reference_first()) {}
@@ -26,9 +26,9 @@ namespace kernel_lib {
                 Eigen::MatrixXd psi;
 
                 if (_reference_first)
-                    psi = _kernel(_reference, x).reshaped(_reference.rows(), x.rows()).transpose();
+                    psi = _kernel(_reference, x).transpose();
                 else
-                    psi = _kernel(x, _reference).reshaped(x.rows(), _reference.rows()).transpose();
+                    psi = _kernel(x, _reference).transpose();
 
                 for (size_t i = 0; i < psi.rows(); i++)
                     psi.row(i) = psi.row(i).cwiseProduct(_weight.transpose());

@@ -7,7 +7,11 @@
 using namespace kernel_lib;
 
 struct Params {
-    struct kernel_exp : public defaults::kernel_exp {
+    struct kernel : public defaults::kernel {
+        /* data */
+    };
+
+    struct rbf : public defaults::rbf {
         // Spherical
         PARAM_SCALAR(Covariance, type, CovarianceType::SPHERICAL);
         PARAM_SCALAR(bool, inverse, false);
@@ -32,15 +36,15 @@ struct Params {
 
 int main(int argc, char const* argv[])
 {
-    size_t dim = 2, num_samples = 30000;
+    size_t dim = 2, num_samples = 20000;
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_samples, dim);
 
-    using Kernel_t = kernels::Exp<Params>;
+    using Kernel_t = kernels::Rbf<Params>;
 
     Kernel_t k;
     {
         utils_cpp::Timer timer;
-        k.log_kernel(X, X);
+        k(X, X);
     }
 
     return 0;
