@@ -9,8 +9,8 @@ namespace kernel_lib {
     namespace defaults {
         struct kernel {
             // Parameters
-            PARAM_SCALAR(double, sigma_n, 0);
-            PARAM_SCALAR(double, sigma_f, 1);
+            PARAM_SCALAR(double, sigma_n, 0.0);
+            PARAM_SCALAR(double, sigma_f, 1.0);
         };
     } // namespace defaults
 
