@@ -72,7 +72,7 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y_samples; j++)
                         for (size_t i = 0; i < x_samples; i++) {
-                            k(i, j) = exp((x.row(i) - y.row(j)).squaredNorm() * sig) * AbstractKernel<Params>::_sigma_f + ((j == i) ? AbstractKernel<Params>::_sigma_n + 1e-8 : 0);
+                            k(i, j) = exp((x.row(i) - y.row(j)).squaredNorm() * sig) * pow(AbstractKernel<Params>::_sigma_f, 2) + ((j == i) ? pow(AbstractKernel<Params>::_sigma_n, 2) + 1e-8 : 0);
                         }
                 }
                 else if (_type & CovarianceType::DIAGONAL) {
@@ -83,7 +83,7 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y_samples; j++)
                         for (size_t i = 0; i < x_samples; i++) {
-                            k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum()) * AbstractKernel<Params>::_sigma_f + ((j == i) ? AbstractKernel<Params>::_sigma_n + 1e-8 : 0);
+                            k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum()) * pow(AbstractKernel<Params>::_sigma_f, 2) + ((j == i) ? pow(AbstractKernel<Params>::_sigma_n, 2) + 1e-8 : 0);
                         }
                 }
                 else if (_type & CovarianceType::FULL) {
@@ -96,7 +96,7 @@ namespace kernel_lib {
                         for (size_t j = 0; j < y_samples; j++) {
                             for (size_t i = 0; i < x_samples; i++) {
                                 Eigen::VectorXd v = x.row(i) - y.row(j);
-                                k(i, j) = exp(v.transpose() * sig * v) * AbstractKernel<Params>::_sigma_f + ((j == i) ? AbstractKernel<Params>::_sigma_n + 1e-8 : 0);
+                                k(i, j) = exp(v.transpose() * sig * v) * pow(AbstractKernel<Params>::_sigma_f, 2) + ((j == i) ? pow(AbstractKernel<Params>::_sigma_n, 2) + 1e-8 : 0);
                             }
                         }
                     }
