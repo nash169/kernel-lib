@@ -33,7 +33,13 @@ namespace kernel_lib {
             Eigen::VectorXd params() const { return this->parameters(); }
 
             /* Set parameters */
-            void setParams(const Eigen::VectorXd& params) { this->setParameters(params); }
+            void setParams(const Eigen::VectorXd& params)
+            {
+                _sigma_n = params(0);
+                _sigma_f = params(1);
+
+                this->setParameters(params.segment(2, params.rows() - 2));
+            }
 
             /* Parameters' gradient */
             Eigen::MatrixXd gradParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const { return this->gradientParams(x, y); }

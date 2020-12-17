@@ -34,6 +34,8 @@ namespace kernel_lib {
         // also check if it is ok returning inside the is statement
         // with this thing compilation time gets super long why?
         Chol::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma);
+
+        Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> upperCholesky(const Eigen::MatrixXd& mat);
     } // namespace tools
 } // namespace kernel_lib
 

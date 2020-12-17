@@ -36,8 +36,8 @@ int main(int argc, char const* argv[])
     std::cout << "Square Exponential kernel (Diagonal)" << std::endl;
     SumRbf rbf_diagonal;
 
-    Eigen::VectorXd params_diag(2);
-    params_diag << 1, 5;
+    Eigen::VectorXd params_diag(4);
+    params_diag << 0, 1, 1, 5;
     rbf_diagonal.kernel().setCovariance(CovarianceType::DIAGONAL).setParams(params_diag);
 
     io_manager.setFile("rsc/kernel_eval/rbf_diagonal.csv");
@@ -47,11 +47,12 @@ int main(int argc, char const* argv[])
     std::cout << "Square Exponential kernel (Full)" << std::endl;
     SumRbf rbf_full;
 
-    Eigen::VectorXd direction(2), standard_dev(2);
+    Eigen::VectorXd direction(2), standard_dev(2), params_full(6);
     direction << 1, 1;
     standard_dev << 2, 5;
     Eigen::MatrixXd C = tools::createCovariance(direction, standard_dev);
-    rbf_full.kernel().setCovariance(CovarianceType::FULL).setParams(C.reshaped(std::pow(dim, 2), 1));
+    params_full << 0, 1, C.reshaped(std::pow(dim, 2), 1);
+    rbf_full.kernel().setCovariance(CovarianceType::FULL).setParams(params_full);
 
     io_manager.setFile("rsc/kernel_eval/rbf_full.csv");
     io_manager.write("X", X, "Y", Y, "F", rbf_full(x_train, x_test));

@@ -99,6 +99,53 @@ namespace kernel_lib {
             return U * D * U.transpose(); // U.transpose() * D * U; for the inverse ?
         }
 
+        Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> upperCholesky(const Eigen::MatrixXd& mat)
+        {
+            Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> uut = mat.selfadjointView<Eigen::Upper>().llt();
+
+            if (uut.info() != Eigen::Success) {
+                // There was an error; probably the matrix is not SPD
+                // Let's try to make it SPD and take cholesky of that
+                // original MATLAB code: http://fr.mathworks.com/matlabcentral/fileexchange/42885-nearestspd
+                // Note that at this point _L is not cholesky factor, but matrix to be factored
+
+                // Symmetrize A into B
+                Eigen::MatrixXd B = (mat.array() + mat.transpose().array()) / 2.;
+
+                // Compute the symmetric polar factor of B. Call it H. Clearly H is itself SPD.
+                Eigen::JacobiSVD<Eigen::MatrixXd> svd(B, Eigen::ComputeFullU | Eigen::ComputeFullV);
+                Eigen::MatrixXd V, Sigma, H, U_hat;
+
+                Sigma = Eigen::MatrixXd::Identity(B.rows(), B.cols());
+                Sigma.diagonal() = svd.singularValues();
+                V = svd.matrixV();
+
+                H = V * Sigma * V.transpose();
+
+                // Get candidate for closest SPD matrix to sigma
+                U_hat = (B.array() + H.array()) / 2.;
+
+                // Ensure symmetry
+                U_hat = (U_hat.array() + U_hat.array()) / 2.;
+
+                // Test that U_hat is in fact PD. if it is not so, then tweak it just a bit.
+                Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> uut_hat = U_hat.selfadjointView<Eigen::Upper>().llt();
+
+                int k = 0;
+                while (uut_hat.info() != Eigen::Success) {
+                    k++;
+                    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(U_hat);
+                    double min_eig = es.eigenvalues().minCoeff();
+                    U_hat.diagonal().array() += (-min_eig * k * k + 1e-50);
+                    uut_hat.compute(U_hat);
+                }
+
+                return uut_hat;
+            }
+            else
+                return uut;
+        }
+
         Chol::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma)
         {
             Chol chol(sigma);

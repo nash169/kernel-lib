@@ -64,6 +64,8 @@ namespace kernel_lib {
 
                 Eigen::MatrixXd k(x_samples, y_samples);
 
+                double sf2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_f)), sn2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_n));
+
                 if (_type & CovarianceType::SPHERICAL) {
                     REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
 
@@ -71,9 +73,8 @@ namespace kernel_lib {
 
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y_samples; j++)
-                        for (size_t i = 0; i < x_samples; i++) {
-                            k(i, j) = exp((x.row(i) - y.row(j)).squaredNorm() * sig) * pow(AbstractKernel<Params>::_sigma_f, 2) + ((j == i) ? pow(AbstractKernel<Params>::_sigma_n, 2) + 1e-8 : 0);
-                        }
+                        for (size_t i = 0; i < x_samples; i++)
+                            k(i, j) = exp((x.row(i) - y.row(j)).squaredNorm() * sig) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
                 }
                 else if (_type & CovarianceType::DIAGONAL) {
                     REQUIRED_DIMENSION(_sigma.rows() == n_features, "Sigma requires dimension equal to the number of features")
@@ -82,33 +83,28 @@ namespace kernel_lib {
 
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y_samples; j++)
-                        for (size_t i = 0; i < x_samples; i++) {
-                            k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum()) * pow(AbstractKernel<Params>::_sigma_f, 2) + ((j == i) ? pow(AbstractKernel<Params>::_sigma_n, 2) + 1e-8 : 0);
-                        }
+                        for (size_t i = 0; i < x_samples; i++)
+                            k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum()) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
                 }
                 else if (_type & CovarianceType::FULL) {
                     REQUIRED_DIMENSION(_sigma.rows() == std::pow(n_features, 2), "Sigma requires dimension equal to squared number of features")
-
                     if (_inverse) {
                         const Eigen::MatrixXd& sig = _sigma.reshaped(n_features, n_features) * -0.5;
 
 #pragma omp parallel for collapse(2)
-                        for (size_t j = 0; j < y_samples; j++) {
+                        for (size_t j = 0; j < y_samples; j++)
                             for (size_t i = 0; i < x_samples; i++) {
                                 Eigen::VectorXd v = x.row(i) - y.row(j);
-                                k(i, j) = exp(v.transpose() * sig * v) * pow(AbstractKernel<Params>::_sigma_f, 2) + ((j == i) ? pow(AbstractKernel<Params>::_sigma_n, 2) + 1e-8 : 0);
+                                k(i, j) = exp(v.transpose() * sig * v) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
                             }
-                        }
                     }
                     else {
-                        const Chol::Traits::MatrixL& L = tools::cholesky(_sigma.reshaped(n_features, n_features));
+                        Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_sigma.reshaped(n_features, n_features));
 
 #pragma omp parallel for collapse(2)
                         for (size_t j = 0; j < y_samples; j++)
-                            for (size_t i = 0; i < x_samples; i++) {
-                                // k(i, j) = exp(L.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5) * AbstractKernel<Params>::_sigma_f + ((j == i) ? AbstractKernel<Params>::_sigma_n + 1e-8 : 0);
-                                k(i, j) = exp(L.solve((x.row(i) - y.row(j)).transpose()).squaredNorm());
-                            }
+                            for (size_t i = 0; i < x_samples; i++)
+                                k(i, j) = std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
                     }
                 }
 
