@@ -10,9 +10,6 @@ namespace kernel_lib {
         SPHERICAL = 1 << 0,
         DIAGONAL = 1 << 1,
         FULL = 1 << 2,
-
-        FIRST = 1 << 3,
-        SECOND = 1 << 4
     };
 
     using Covariance = Corrade::Containers::EnumSet<CovarianceType>;
@@ -67,14 +64,7 @@ namespace kernel_lib {
                 double sf2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_f)), sn2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_n));
 
                 if (_type & CovarianceType::SPHERICAL) {
-                    REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
-
-                    double sig = -0.5 / std::pow(_sigma(0, 0), 2);
-
-#pragma omp parallel for collapse(2)
-                    for (size_t j = 0; j < y_samples; j++)
-                        for (size_t i = 0; i < x_samples; i++)
-                            k(i, j) = exp((x.row(i) - y.row(j)).squaredNorm() * sig) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
+                    spherical_mkl(k, x, y, sf2, sn2);
                 }
                 else if (_type & CovarianceType::DIAGONAL) {
                     REQUIRED_DIMENSION(_sigma.rows() == n_features, "Sigma requires dimension equal to the number of features")
@@ -145,6 +135,50 @@ namespace kernel_lib {
             size_t sizeParameters() const override
             {
                 return _sigma.rows();
+            }
+
+        private:
+            void spherical(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const double& sf2, const double& sn2) const
+            {
+                REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
+
+                double sig = -0.5 / std::pow(_sigma(0, 0), 2);
+
+#pragma omp parallel for collapse(2)
+                for (size_t j = 0; j < y.rows(); j++)
+                    for (size_t i = 0; i < x.rows(); i++)
+                        k(i, j) = exp((x.row(i) - y.row(j)).squaredNorm() * sig) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
+            }
+
+            void spherical_mkl(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const double& sf2, const double& sn2) const
+            {
+                REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
+
+                double sig = -0.5 / std::pow(_sigma(0, 0), 2);
+
+#pragma omp parallel for collapse(2)
+                for (size_t j = 0; j < y.rows(); j++)
+                    for (size_t i = 0; i < x.rows(); i++)
+                        k(i, j) = (x.row(i) - y.row(j)).squaredNorm() * sig;
+
+                k = sf2 * k.array().exp();
+
+                k.diagonal().array() += sn2;
+            }
+
+            void spherical_vectorized(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const double& sf2, const double& sn2) const
+            {
+                REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
+
+                double sig = -0.5 / std::pow(_sigma(0, 0), 2);
+
+                k = -2 * x * y.transpose();
+                k.colwise() += x.array().pow(2).rowwise().sum().matrix();
+                k.rowwise() += y.array().pow(2).rowwise().sum().matrix().transpose();
+
+                k = sf2 * k.array().exp();
+
+                k.diagonal().array() += sn2;
             }
         };
     } // namespace kernels

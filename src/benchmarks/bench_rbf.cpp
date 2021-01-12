@@ -36,16 +36,23 @@ struct Params {
 
 int main(int argc, char const* argv[])
 {
-    size_t dim = 2, num_samples = 20;
+    size_t dim = 2, num_samples = 20000;
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_samples, dim), Y = Eigen::MatrixXd::Random(num_samples, dim);
 
     using Kernel_t = kernels::Rbf<Params>;
 
     Kernel_t k;
-    // {
-    //     utils_cpp::Timer timer;
-    k(X, X);
-    // }
+    {
+        utils_cpp::Timer timer;
+        k(X, X);
+    }
+
+    // Eigen::MatrixXd Mat = Eigen::MatrixXd::Random(num_samples, num_samples);
+
+    // Mat.colwise() += X.array().pow(2).rowwise().sum().matrix();
+    // Mat.rowwise() += Y.array().pow(2).rowwise().sum().matrix().transpose();
+
+    // std::cout << X.array().pow(2).rowwise().sum() << std::endl;
 
     return 0;
 }
