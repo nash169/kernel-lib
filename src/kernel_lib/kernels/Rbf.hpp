@@ -19,7 +19,6 @@ namespace kernel_lib {
         struct rbf {
             // Settings
             PARAM_SCALAR(Covariance, type, CovarianceType::SPHERICAL);
-            PARAM_SCALAR(bool, inverse, false);
 
             // Parameters
             PARAM_VECTOR(double, sigma, 1);
@@ -30,7 +29,7 @@ namespace kernel_lib {
         template <typename Params>
         class Rbf : public AbstractKernel<Params> {
         public:
-            Rbf() : _sigma(Params::rbf::sigma()), _type(Params::rbf::type()), _inverse(Params::rbf::inverse()) {}
+            Rbf() : _sigma(Params::rbf::sigma()), _type(Params::rbf::type()) {}
 
             /* Settings */
             Rbf& setCovariance(const Covariance& cov)
@@ -40,11 +39,17 @@ namespace kernel_lib {
                 return *this;
             }
 
-            Rbf& setInverse(const bool& inverse)
+            void logKernel(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                _inverse = inverse;
-
-                return *this;
+                if (_type & CovarianceType::SPHERICAL) {
+                    spherical(k, x, y);
+                }
+                else if (_type & CovarianceType::DIAGONAL) {
+                    diagonal(k, x, y);
+                }
+                else if (_type & CovarianceType::FULL) {
+                    full(k, x, y);
+                }
             }
 
         protected:
@@ -56,47 +61,17 @@ namespace kernel_lib {
 
             Eigen::MatrixXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override
             {
-                size_t x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
-                REQUIRED_DIMENSION(n_features == y.cols(), "Y must have the same dimension of X")
+                REQUIRED_DIMENSION(x.cols() == y.cols(), "Y must have the same dimension of X")
 
-                Eigen::MatrixXd k(x_samples, y_samples);
+                Eigen::MatrixXd k(x.rows(), y.rows());
 
                 double sf2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_f)), sn2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_n));
 
-                if (_type & CovarianceType::SPHERICAL) {
-                    spherical_mkl(k, x, y, sf2, sn2);
-                }
-                else if (_type & CovarianceType::DIAGONAL) {
-                    REQUIRED_DIMENSION(_sigma.rows() == n_features, "Sigma requires dimension equal to the number of features")
+                logKernel(k, x, y);
 
-                    Eigen::Array<double, 1, Eigen::Dynamic> sig = -0.5 * _sigma.transpose().array().pow(2).inverse();
+                k = sf2 * k.array().exp();
 
-#pragma omp parallel for collapse(2)
-                    for (size_t j = 0; j < y_samples; j++)
-                        for (size_t i = 0; i < x_samples; i++)
-                            k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum()) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
-                }
-                else if (_type & CovarianceType::FULL) {
-                    REQUIRED_DIMENSION(_sigma.rows() == std::pow(n_features, 2), "Sigma requires dimension equal to squared number of features")
-                    if (_inverse) {
-                        const Eigen::MatrixXd& sig = _sigma.reshaped(n_features, n_features) * -0.5;
-
-#pragma omp parallel for collapse(2)
-                        for (size_t j = 0; j < y_samples; j++)
-                            for (size_t i = 0; i < x_samples; i++) {
-                                Eigen::VectorXd v = x.row(i) - y.row(j);
-                                k(i, j) = exp(v.transpose() * sig * v) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
-                            }
-                    }
-                    else {
-                        Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_sigma.reshaped(n_features, n_features));
-
-#pragma omp parallel for collapse(2)
-                        for (size_t j = 0; j < y_samples; j++)
-                            for (size_t i = 0; i < x_samples; i++)
-                                k(i, j) = std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
-                    }
-                }
+                k.diagonal().array() += sn2;
 
                 return k;
             }
@@ -138,19 +113,8 @@ namespace kernel_lib {
             }
 
         private:
-            void spherical(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const double& sf2, const double& sn2) const
-            {
-                REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
-
-                double sig = -0.5 / std::pow(_sigma(0, 0), 2);
-
-#pragma omp parallel for collapse(2)
-                for (size_t j = 0; j < y.rows(); j++)
-                    for (size_t i = 0; i < x.rows(); i++)
-                        k(i, j) = exp((x.row(i) - y.row(j)).squaredNorm() * sig) * sf2 + ((j == i && &x == &y) ? sn2 + 1e-8 : 0);
-            }
-
-            void spherical_mkl(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const double& sf2, const double& sn2) const
+            /* Spherical (Isotropic) RBF Kernel*/
+            void spherical(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
 
@@ -160,25 +124,32 @@ namespace kernel_lib {
                 for (size_t j = 0; j < y.rows(); j++)
                     for (size_t i = 0; i < x.rows(); i++)
                         k(i, j) = (x.row(i) - y.row(j)).squaredNorm() * sig;
-
-                k = sf2 * k.array().exp();
-
-                k.diagonal().array() += sn2;
             }
 
-            void spherical_vectorized(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const double& sf2, const double& sn2) const
+            /* Diagonal (ARD) RBF Kernel*/
+            void diagonal(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
+                REQUIRED_DIMENSION(_sigma.rows() == x.cols(), "Sigma requires dimension equal to the number of features")
 
-                double sig = -0.5 / std::pow(_sigma(0, 0), 2);
+                Eigen::Array<double, 1, Eigen::Dynamic> sig = -0.5 * _sigma.transpose().array().pow(2).inverse();
 
-                k = -2 * x * y.transpose();
-                k.colwise() += x.array().pow(2).rowwise().sum().matrix();
-                k.rowwise() += y.array().pow(2).rowwise().sum().matrix().transpose();
+#pragma omp parallel for collapse(2)
+                for (size_t j = 0; j < y.rows(); j++)
+                    for (size_t i = 0; i < x.rows(); i++)
+                        k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum());
+            }
 
-                k = sf2 * k.array().exp();
+            /* Full RBF Kernel*/
+            void full(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                REQUIRED_DIMENSION(_sigma.rows() == std::pow(x.cols(), 2), "Sigma requires dimension equal to squared number of features")
 
-                k.diagonal().array() += sn2;
+                Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_sigma.reshaped(x.cols(), x.cols()));
+
+#pragma omp parallel for collapse(2)
+                for (size_t j = 0; j < y.rows(); j++)
+                    for (size_t i = 0; i < x.rows(); i++)
+                        k(i, j) = std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
             }
         };
     } // namespace kernels
