@@ -71,7 +71,8 @@ namespace kernel_lib {
 
                 k = sf2 * k.array().exp();
 
-                k.diagonal().array() += sn2;
+                if (&x == &y)
+                    k.diagonal().array() += sn2 + 1e-8;
 
                 return k;
             }
