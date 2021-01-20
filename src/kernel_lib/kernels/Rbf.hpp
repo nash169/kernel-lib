@@ -42,13 +42,34 @@ namespace kernel_lib {
             void logKernel(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 if (_type & CovarianceType::SPHERICAL) {
-                    spherical(k, x, y);
+                    REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
+
+                    double sig = -0.5 / std::pow(_sigma(0, 0), 2);
+
+#pragma omp parallel for collapse(2)
+                    for (size_t j = 0; j < y.rows(); j++)
+                        for (size_t i = 0; i < x.rows(); i++)
+                            k(i, j) = (x.row(i) - y.row(j)).squaredNorm() * sig;
                 }
                 else if (_type & CovarianceType::DIAGONAL) {
-                    diagonal(k, x, y);
+                    REQUIRED_DIMENSION(_sigma.rows() == x.cols(), "Sigma requires dimension equal to the number of features")
+
+                    Eigen::Array<double, 1, Eigen::Dynamic> sig = -0.5 * _sigma.transpose().array().pow(2).inverse();
+
+#pragma omp parallel for collapse(2)
+                    for (size_t j = 0; j < y.rows(); j++)
+                        for (size_t i = 0; i < x.rows(); i++)
+                            k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum());
                 }
                 else if (_type & CovarianceType::FULL) {
-                    full(k, x, y);
+                    REQUIRED_DIMENSION(_sigma.rows() == std::pow(x.cols(), 2), "Sigma requires dimension equal to squared number of features")
+
+                    Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_sigma.reshaped(x.cols(), x.cols()));
+
+#pragma omp parallel for collapse(2)
+                    for (size_t j = 0; j < y.rows(); j++)
+                        for (size_t i = 0; i < x.rows(); i++)
+                            k(i, j) = std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
                 }
             }
 
@@ -64,10 +85,11 @@ namespace kernel_lib {
                 REQUIRED_DIMENSION(x.cols() == y.cols(), "Y must have the same dimension of X")
 
                 Eigen::MatrixXd k(x.rows(), y.rows());
+                logKernel(k, x, y);
+
+                // std::unique_ptr<Eigen::Matrix> logKernel(x, y);
 
                 double sf2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_f)), sn2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_n));
-
-                logKernel(k, x, y);
 
                 k = sf2 * k.array().exp();
 
@@ -111,46 +133,6 @@ namespace kernel_lib {
             size_t sizeParameters() const override
             {
                 return _sigma.rows();
-            }
-
-        private:
-            /* Spherical (Isotropic) RBF Kernel*/
-            void spherical(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
-            {
-                REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
-
-                double sig = -0.5 / std::pow(_sigma(0, 0), 2);
-
-#pragma omp parallel for collapse(2)
-                for (size_t j = 0; j < y.rows(); j++)
-                    for (size_t i = 0; i < x.rows(); i++)
-                        k(i, j) = (x.row(i) - y.row(j)).squaredNorm() * sig;
-            }
-
-            /* Diagonal (ARD) RBF Kernel*/
-            void diagonal(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
-            {
-                REQUIRED_DIMENSION(_sigma.rows() == x.cols(), "Sigma requires dimension equal to the number of features")
-
-                Eigen::Array<double, 1, Eigen::Dynamic> sig = -0.5 * _sigma.transpose().array().pow(2).inverse();
-
-#pragma omp parallel for collapse(2)
-                for (size_t j = 0; j < y.rows(); j++)
-                    for (size_t i = 0; i < x.rows(); i++)
-                        k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum());
-            }
-
-            /* Full RBF Kernel*/
-            void full(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
-            {
-                REQUIRED_DIMENSION(_sigma.rows() == std::pow(x.cols(), 2), "Sigma requires dimension equal to squared number of features")
-
-                Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_sigma.reshaped(x.cols(), x.cols()));
-
-#pragma omp parallel for collapse(2)
-                for (size_t j = 0; j < y.rows(); j++)
-                    for (size_t i = 0; i < x.rows(); i++)
-                        k(i, j) = std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
             }
         };
     } // namespace kernels
