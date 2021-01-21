@@ -3,6 +3,7 @@
 
 #include "kernel_lib/kernels/AbstractKernel.hpp"
 #include <Corrade/Containers/EnumSet.h>
+#include <Corrade/Containers/Pointer.h>
 // #include <tbb/tbb.h>
 
 namespace kernel_lib {
@@ -39,8 +40,10 @@ namespace kernel_lib {
                 return *this;
             }
 
-            void logKernel(Eigen::MatrixXd& k, const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            Corrade::Containers::Pointer<Eigen::MatrixXd> logKernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
+                Corrade::Containers::Pointer<Eigen::MatrixXd> k(new Eigen::MatrixXd(x.rows(), y.rows()));
+
                 if (_type & CovarianceType::SPHERICAL) {
                     REQUIRED_DIMENSION(_sigma.rows() == 1, "Sigma requires dimension 1")
 
@@ -49,7 +52,7 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y.rows(); j++)
                         for (size_t i = 0; i < x.rows(); i++)
-                            k(i, j) = (x.row(i) - y.row(j)).squaredNorm() * sig;
+                            (*k)(i, j) = (x.row(i) - y.row(j)).squaredNorm() * sig;
                 }
                 else if (_type & CovarianceType::DIAGONAL) {
                     REQUIRED_DIMENSION(_sigma.rows() == x.cols(), "Sigma requires dimension equal to the number of features")
@@ -59,7 +62,7 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y.rows(); j++)
                         for (size_t i = 0; i < x.rows(); i++)
-                            k(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum());
+                            (*k)(i, j) = exp(((x.row(i) - y.row(j)).array().square() * sig).sum());
                 }
                 else if (_type & CovarianceType::FULL) {
                     REQUIRED_DIMENSION(_sigma.rows() == std::pow(x.cols(), 2), "Sigma requires dimension equal to squared number of features")
@@ -69,8 +72,10 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y.rows(); j++)
                         for (size_t i = 0; i < x.rows(); i++)
-                            k(i, j) = std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
+                            (*k)(i, j) = std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
                 }
+
+                return std::move(k);
             }
 
         protected:
@@ -84,19 +89,13 @@ namespace kernel_lib {
             {
                 REQUIRED_DIMENSION(x.cols() == y.cols(), "Y must have the same dimension of X")
 
-                Eigen::MatrixXd k(x.rows(), y.rows());
-                logKernel(k, x, y);
+                // logKernel(k, x, y);
 
-                // std::unique_ptr<Eigen::Matrix> logKernel(x, y);
+                Corrade::Containers::Pointer<Eigen::MatrixXd> k = logKernel(x, y);
 
-                double sf2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_f)), sn2 = std::exp(2 * std::log(AbstractKernel<Params>::_sigma_n));
+                k->array() = k->array().exp();
 
-                k = sf2 * k.array().exp();
-
-                if (&x == &y)
-                    k.diagonal().array() += sn2 + 1e-8;
-
-                return k;
+                return std::move(*k);
             }
 
             Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const override

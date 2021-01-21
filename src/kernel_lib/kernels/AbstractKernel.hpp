@@ -21,7 +21,19 @@ namespace kernel_lib {
             AbstractKernel() : _sigma_n(Params::kernel::sigma_n()), _sigma_f(Params::kernel::sigma_f()) {}
 
             /* Evaluate Kernel */
-            Eigen::MatrixXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const { return this->kernel(x, y); }
+            Eigen::MatrixXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                Eigen::MatrixXd k = this->kernel(x, y);
+
+                double sf2 = std::exp(2 * std::log(_sigma_f)), sn2 = std::exp(2 * std::log(_sigma_n));
+
+                k *= sf2;
+
+                if (&x == &y)
+                    k.diagonal().array() += sn2 + 1e-8;
+
+                return k;
+            }
 
             /* Evaluate Gradient */
             Eigen::MatrixXd grad(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const { return this->gradient(x, y); }

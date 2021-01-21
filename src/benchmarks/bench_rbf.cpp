@@ -46,7 +46,7 @@ int main(int argc, char const* argv[])
 
     {
         utils_cpp::Timer timer;
-        k(X, X);
+        Eigen::MatrixXd test = k(X, X);
     }
 
     return 0;
