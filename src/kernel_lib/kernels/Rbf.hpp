@@ -93,7 +93,7 @@ namespace kernel_lib {
 
                 Corrade::Containers::Pointer<Eigen::MatrixXd> k = logKernel(x, y);
 
-                k->array() = k->array().exp();
+                k->array() = k->array().exp(); // k.unaryExpr(&Exp)
 
                 return std::move(*k);
             }
