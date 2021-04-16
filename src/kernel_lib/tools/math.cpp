@@ -146,9 +146,9 @@ namespace kernel_lib {
                 return uut;
         }
 
-        Chol::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma)
+        Eigen::LLT<Eigen::MatrixXd>::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma)
         {
-            Chol chol(sigma);
+            Eigen::LLT<Eigen::MatrixXd> chol(sigma);
 
             if (chol.info() != Eigen::Success) {
                 // There was an error; probably the matrix is not SPD

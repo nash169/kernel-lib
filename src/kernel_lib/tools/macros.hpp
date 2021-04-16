@@ -2,7 +2,6 @@
 #define KERNELLIB_TOOLS_MACROS_HPP
 
 #include <Eigen/Core>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
 
 #define PARAM_SCALAR(Type, Name, Value) \

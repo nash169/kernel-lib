@@ -18,7 +18,8 @@ def build(bld):
     sources = [f[len(bld.path.abspath()) + 1:] for f in sources]
 
     # Define additional required libraries for the tests
-    test_required = {}
+    test_required = {"check_grad.cpp": "UTILSCPP",
+                     "check_kernel.cpp": "UTILSCPP"}
 
     # Compile all the tests
     for test in sources:

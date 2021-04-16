@@ -23,20 +23,20 @@ namespace kernel_lib {
             /* Evaluate Kernel */
             Eigen::MatrixXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                Eigen::MatrixXd k = this->kernel(x, y);
-
                 double sf2 = std::exp(2 * std::log(_sigma_f)), sn2 = std::exp(2 * std::log(_sigma_n));
+
+                Eigen::MatrixXd k = this->kernel(x, y);
 
                 k *= sf2;
 
                 if (&x == &y)
                     k.diagonal().array() += sn2 + 1e-8;
 
-                return k;
+                return std::move(k);
             }
 
             /* Evaluate Gradient */
-            Eigen::MatrixXd grad(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const { return this->gradient(x, y); }
+            Eigen::MatrixXd grad(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const size_t& i = 1) const { return this->gradient(x, y, i); }
 
             /* Evaluate Hessian */
             Eigen::MatrixXd hess(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const { return this->hessian(x, y); }
@@ -57,7 +57,7 @@ namespace kernel_lib {
             Eigen::MatrixXd gradParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const { return this->gradientParams(x, y); }
 
             /* Parameters' size */
-            size_t sizeParams() const { return this->sizeParameters(); }
+            size_t sizeParams() const { return this->sizeParameters() + 2; }
 
         protected:
             double _sigma_n, _sigma_f;
@@ -66,10 +66,10 @@ namespace kernel_lib {
             virtual Eigen::MatrixXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const = 0;
 
             /* Gradient */
-            virtual Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const = 0;
+            virtual Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const size_t& i) const = 0;
 
             /* Hessian */
-            virtual Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const = 0;
+            virtual Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const size_t& i) const = 0;
 
             /* Get specific kernel parameters */
             virtual Eigen::VectorXd parameters() const = 0;

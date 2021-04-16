@@ -4,8 +4,6 @@
 #include <Eigen/Dense>
 #include <iostream>
 
-using Chol = Eigen::LLT<Eigen::MatrixXd>;
-
 namespace kernel_lib {
     namespace tools {
         Eigen::MatrixXd c_reshape(Eigen::MatrixXd M, int num_rows, int num_cols);
@@ -33,7 +31,7 @@ namespace kernel_lib {
         // Code from limbo to calculate the cholesky (check if optimized)
         // also check if it is ok returning inside the is statement
         // with this thing compilation time gets super long why?
-        Chol::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma);
+        Eigen::LLT<Eigen::MatrixXd>::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma);
 
         Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> upperCholesky(const Eigen::MatrixXd& mat);
     } // namespace tools

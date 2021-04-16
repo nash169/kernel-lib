@@ -52,6 +52,7 @@ def configure(cfg):
     # Activate OPENMP if parellel option is active
     if cfg.options.multi_threading:
         cfg.load("openmp", tooldir="waf_tools")
+        cfg.env["DEFINES"] += ["PARALLEL"]
 
     # Remove duplicates
     cfg.get_env()["libs"] = list(set(cfg.get_env()["libs"]))
@@ -93,7 +94,8 @@ def build(bld):
             target=bld.get_env()["libname"],
             includes=includes_path,
             uselib=bld.get_env()["libs"],
-            cxxxflags=bld.get_env()["CXXFLAGS"],
+            defines=bld.get_env()["DEFINES"],
+            cxxflags=bld.get_env()["CXXFLAGS"],
         )
     else:
         bld.stlib(
@@ -102,8 +104,8 @@ def build(bld):
             target=bld.get_env()["libname"],
             includes=includes_path,
             uselib=bld.get_env()["libs"],
-            use="BOOST",
-            cxxxflags=bld.get_env()["CXXFLAGS"],
+            defines=bld.get_env()["DEFINES"],
+            cxxflags=bld.get_env()["CXXFLAGS"],
         )
 
     # Build executables
