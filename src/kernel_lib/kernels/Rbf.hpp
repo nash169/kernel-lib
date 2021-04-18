@@ -87,7 +87,7 @@ namespace kernel_lib {
                 else if (_type & CovarianceType::FULL) {
                     REQUIRED_DIMENSION(_sigma.rows() == std::pow(x.cols(), 2), "Sigma requires dimension equal to squared number of features")
 
-                    Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_sigma.reshaped(x.cols(), x.cols()));
+                    Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::cholesky(_sigma.reshaped(x.cols(), x.cols()));
 
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y.rows(); j++)
@@ -197,7 +197,7 @@ namespace kernel_lib {
                 else if (_type & CovarianceType::FULL) {
                     REQUIRED_DIMENSION(_sigma.rows() == std::pow(x.cols(), 2), "Sigma requires dimension equal to squared number of features")
 
-                    Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_sigma.reshaped(x.cols(), x.cols()));
+                    Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::cholesky(_sigma.reshaped(x.cols(), x.cols()));
 
 #pragma omp parallel for collapse(2)
                     for (size_t i = 0; i < x.rows(); i++)
@@ -242,7 +242,7 @@ namespace kernel_lib {
                 else if (_type & CovarianceType::FULL) {
                     REQUIRED_DIMENSION(_sigma.rows() == std::pow(x.cols(), 2), "Sigma requires dimension equal to squared number of features")
 
-                    Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_sigma.reshaped(x.cols(), x.cols()));
+                    Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::cholesky(_sigma.reshaped(x.cols(), x.cols()));
 
 #pragma omp parallel for collapse(2)
                     for (size_t j = 0; j < y.rows(); j++)
