@@ -28,12 +28,9 @@ namespace kernel_lib {
 
         Eigen::MatrixXd repeat_block(Eigen::MatrixXd& M, int blksize, int repeat, int direction);
 
-        // Code from limbo to calculate the cholesky (check if optimized)
-        // also check if it is ok returning inside the is statement
-        // with this thing compilation time gets super long why?
-        Eigen::LLT<Eigen::MatrixXd>::Traits::MatrixL cholesky(const Eigen::MatrixXd& sigma);
+        // Check if LAPACK works with Lower triangular as well
+        Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> cholesky(const Eigen::MatrixXd& mat);
 
-        Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> upperCholesky(const Eigen::MatrixXd& mat);
     } // namespace tools
 } // namespace kernel_lib
 
