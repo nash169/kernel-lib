@@ -1,6 +1,10 @@
+#include "kernel_lib/tools/math.hpp"
 #include <iostream>
+#include <kernel_lib/kernels/MaternFiveTwo.hpp>
+#include <kernel_lib/kernels/MaternThreeTwo.hpp>
 #include <kernel_lib/kernels/SquaredExp.hpp>
 #include <kernel_lib/kernels/SquaredExpArd.hpp>
+#include <kernel_lib/kernels/SquaredExpFad.hpp>
 #include <kernel_lib/kernels/SquaredExpFull.hpp>
 
 using namespace kernel_lib;
