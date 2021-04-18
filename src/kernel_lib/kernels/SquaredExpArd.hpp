@@ -62,25 +62,15 @@ namespace kernel_lib {
 
                 Eigen::MatrixXd grad(x_samples * y_samples, 2 + _l.rows());
 
-                Eigen::Array<double, 1, Eigen::Dynamic> l2_i = _l.array().pow(2).inverse(),
-                                                        d = -0.5 * l2_i, m = AbstractKernel2<Params>::_sf2 * l2_i, n2;
-
-                double sf_d = 2 * AbstractKernel2<Params>::_sf2, sn_d = 2 * AbstractKernel2<Params>::_sn2, k;
-
-                size_t index;
+                double sf_d = 2 * AbstractKernel2<Params>::_sf2, sn_d = 2 * AbstractKernel2<Params>::_sn2;
+                Eigen::Array<double, 1, Eigen::Dynamic> l2_i = _l.array().pow(2).inverse(), d = -0.5 * l2_i, m = AbstractKernel2<Params>::_sf2 * l2_i;
 
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++) {
-                        n2 = (x.row(i) - y.row(j)).array().square();
-                        k = std::exp((n2 * d).sum());
-
-                        index = j * x_samples + i;
-
-                        grad(index, 0) = sf_d * k;
-                        grad(index, 1) = (j == i && &x == &y) ? sn_d : 0;
-
-                        grad.row(index).segment(2, _l.rows()) = m * n2 * k;
+                        Eigen::Array<double, 1, Eigen::Dynamic> n2 = (x.row(i) - y.row(j)).array().square();
+                        double k = std::exp((n2 * d).sum());
+                        grad.row(j * x_samples + i) << sf_d * k, (j == i && &x == &y) ? sn_d : 0, m * n2 * k;
                     }
 
                 return grad;

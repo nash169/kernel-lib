@@ -36,14 +36,13 @@ namespace kernel_lib {
 
                 Eigen::MatrixXd grad(x_samples * y_samples, n_features);
 
-                Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_S);
+                Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::cholesky(_S);
 
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        grad.row(j * x_samples + i) = AbstractKernel2<Params>::_sf2 * U.solve((x.row(i) - y.row(j)).transpose());
-                // U.transpose().solve();
-                // * std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
+                        grad.row(j * x_samples + i) = AbstractKernel2<Params>::_sf2 * U.solve((x.row(i) - y.row(j)).transpose())
+                            * std::exp(U.matrixL().solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
 
                 return grad;
             }
@@ -59,32 +58,22 @@ namespace kernel_lib {
             /* Get specific kernel parameters gradient */
             Eigen::MatrixXd gradientParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
-                size_t x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
+                size_t x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols(), n_params = _S.size();
 
                 REQUIRED_DIMENSION(n_features == y.cols(), "Y must have the same dimension of X")
 
-                Eigen::MatrixXd grad(x_samples * y_samples, 3);
+                Eigen::MatrixXd grad(x_samples * y_samples, 2 + n_params);
 
-                //                 double sf_d = 2 * AbstractKernel2<Params>::_sf2, sn_d = 2 * AbstractKernel2<Params>::_sn2,
-                //                        k;
+                double sf_d = 2 * AbstractKernel2<Params>::_sf2, sn_d = 2 * AbstractKernel2<Params>::_sn2;
+                Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::cholesky(_S);
 
-                //                 Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_S);
-                //                 Eigen::VectorXd prod;
-
-                //                 size_t index;
-
-                // #pragma omp parallel for collapse(2)
-                //                 for (size_t j = 0; j < y_samples; j++)
-                //                     for (size_t i = 0; i < x_samples; i++) {
-                //                         index = j * x_samples + i;
-
-                //                         k = std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
-                //                         grad(index, 0) = sf_d * k;
-                //                         grad(index, 1) = (j == i && &x == &y) ? sn_d : 0;
-
-                //                         prod = U.transpose().solve(U.solve(x.row(i) - y.row(j)).transpose());
-                //                         grad.row(index).segment(2, _S.size()) = (prod.transpose() * prod).reshaped(1, n_features) * k;
-                //                     }
+#pragma omp parallel for collapse(2)
+                for (size_t j = 0; j < y_samples; j++)
+                    for (size_t i = 0; i < x_samples; i++) {
+                        double k = std::exp(U.matrixL().solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
+                        Eigen::VectorXd prod = U.solve((x.row(i) - y.row(j)).transpose());
+                        grad.row(j * x_samples + i) << sf_d * k, (j == i && &x == &y) ? sn_d : 0, (prod * prod.transpose()).reshaped(1, n_params) * k;
+                    }
 
                 return grad;
             }
@@ -108,14 +97,12 @@ namespace kernel_lib {
 
                 Eigen::MatrixXd k(x_samples, y_samples);
 
-                // std::cout << _S << std::endl;
-
-                Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::upperCholesky(_S);
+                Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::cholesky(_S);
 
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        k(i, j) = AbstractKernel2<Params>::_sf2 * std::exp(U.solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5)
+                        k(i, j) = AbstractKernel2<Params>::_sf2 * std::exp(U.matrixL().solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5)
                             + ((j == i && &x == &y) ? AbstractKernel2<Params>::_sn2 + 1e-8 : 0);
 
                 return k;
