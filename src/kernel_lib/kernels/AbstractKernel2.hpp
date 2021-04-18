@@ -55,9 +55,6 @@ namespace kernel_lib {
                 this->setParameters(params.segment(2, params.rows() - 2));
             }
 
-            /* Parameters' gradient */
-            Eigen::MatrixXd gradParams(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const { return this->gradientParams(x, y); }
-
             /* Parameters' size */
             size_t sizeParams() const { return this->sizeParameters() + 2; }
 
