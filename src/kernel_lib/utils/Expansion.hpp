@@ -1,7 +1,7 @@
 #ifndef KERNELLIB_EXPANSION_UTILS_HPP
 #define KERNELLIB_EXPANSION_UTILS_HPP
 
-#include "kernel_lib/kernels/Rbf.hpp"
+#include "kernel_lib/kernels/SquaredExp.hpp"
 
 namespace kernel_lib {
     namespace defaults {
@@ -11,7 +11,7 @@ namespace kernel_lib {
     } // namespace defaults
 
     namespace utils {
-        template <typename Params, typename Kernel = kernels::Rbf<Params>>
+        template <typename Params, typename Kernel = kernels::SquaredExp<Params>>
         class Expansion {
         public:
             Expansion() : _kernel(), _reference_first(Params::expansion::reference_first()) {}
