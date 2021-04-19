@@ -1,16 +1,11 @@
-#include "kernel_lib/tools/math.hpp"
 #include <iostream>
-#include <kernel_lib/kernels/MaternFiveTwo.hpp>
-#include <kernel_lib/kernels/MaternThreeTwo.hpp>
-#include <kernel_lib/kernels/SquaredExp.hpp>
-#include <kernel_lib/kernels/SquaredExpArd.hpp>
-#include <kernel_lib/kernels/SquaredExpFad.hpp>
-#include <kernel_lib/kernels/SquaredExpFull.hpp>
+
+#include <kernel_lib/Kernel.hpp>
 
 using namespace kernel_lib;
 
 struct Params {
-    struct kernel2 : public defaults::kernel2 {
+    struct kernel : public defaults::kernel {
         PARAM_SCALAR(double, sf, 0.5);
         PARAM_SCALAR(double, sn, 1.4);
     };
@@ -31,7 +26,7 @@ struct Params {
 int main(int argc, char const* argv[])
 {
     // Data
-    Eigen::MatrixXd x(3, 2), y(4, 2);
+    Eigen::MatrixXd x(3, 2), y(5, 2);
 
     x << 0.097540404999410, 0.957506835434298,
         0.278498218867048, 0.964888535199277,
@@ -40,7 +35,8 @@ int main(int argc, char const* argv[])
     y << 0.970592781760616, 0.141886338627215,
         0.957166948242946, 0.421761282626275,
         0.485375648722841, 0.915735525189067,
-        0.800280468888800, 0.792207329559554;
+        0.800280468888800, 0.792207329559554,
+        0.097540404999410, 0.278498218867048;
 
     // Params
     Eigen::VectorXd params(6);

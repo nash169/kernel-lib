@@ -3,15 +3,12 @@
 #include <thread>
 
 #include <kernel_lib/Kernel.hpp>
-
 #include <utils_cpp/UtilsCpp.hpp>
-
-#include <kernel_lib/kernels/SquaredExp.hpp>
 
 using namespace kernel_lib;
 
 struct Params {
-    struct kernel2 : public defaults::kernel2 {
+    struct kernel : public defaults::kernel {
         PARAM_SCALAR(double, sf, std::log(0.5));
         PARAM_SCALAR(double, sn, std::log(1.4));
     };

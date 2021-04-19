@@ -2,19 +2,10 @@
 
 #include <kernel_lib/Kernel.hpp>
 
-#include <kernel_lib/kernels/SquaredExp.hpp>
-
-// #include <utils_cpp/UtilsCpp.hpp>
-
 using namespace kernel_lib;
 
 struct Params {
     struct kernel : public defaults::kernel {
-        PARAM_SCALAR(double, sigma_n, 2.0);
-        PARAM_SCALAR(double, sigma_f, 1.5);
-    };
-
-    struct kernel2 : public defaults::kernel2 {
         PARAM_SCALAR(double, sf, std::log(1.5));
         PARAM_SCALAR(double, sn, std::log(2.0));
     };
