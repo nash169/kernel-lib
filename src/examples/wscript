@@ -16,13 +16,34 @@ def build(bld):
             sources.append(os.path.join(root, filename))
     sources = [f[len(bld.path.abspath()) + 1:] for f in sources]
 
-    # Define additional required libraries for the examples
-    example_required = {"create_kernels.cpp": "UTILSCPP",
-                        "icub_clustering.cpp": "UTILSCPP"}
+    # External required libraries for the examples
+    example_required = {"create_kernels.cpp": ["UTILSCPP"]}
+
+    # External optional libraries for the examples
+    example_optional = {}
 
     # Compile all the examples
     for example in sources:
-        if example in example_required and example_required[example] in bld.env["libs"]:
+        # Activate optional defines
+        if example in example_optional and set(example_optional[example]).issubset(bld.env["libs"]):
+            optional_defines = None
+        else:
+            optional_defines = None
+
+        if example in example_required:
+            if set(example_required[example]).issubset(bld.env["libs"]):
+                bld.program(
+                    features="cxx",
+                    install_path=None,
+                    source=example,
+                    includes=includes_path,
+                    uselib=bld.env["libs"],
+                    use=bld.env["libname"],
+                    defines=optional_defines,
+                    cxxflags=bld.get_env()["CXXFLAGS"],
+                    target=example[: len(example) - len(".cpp")],
+                )
+        else:
             bld.program(
                 features="cxx",
                 install_path=None,
@@ -30,6 +51,7 @@ def build(bld):
                 includes=includes_path,
                 uselib=bld.env["libs"],
                 use=bld.env["libname"],
+                defines=optional_defines,
                 cxxflags=bld.get_env()["CXXFLAGS"],
                 target=example[: len(example) - len(".cpp")],
             )
