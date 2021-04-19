@@ -3,11 +3,11 @@ Library containing (Eigen-based) vectorized implementation of some kernel.
 
 #### ToDo list
 Here is a list of features to implement or unsolved issues:
-- move Params to class property in order to specialized templates (https://github.com/resibots/limbo/blob/master/src/limbo/model/gp.hpp#L637, https://github.com/resibots/limbo/blob/master/src/limbo/model/gp.hpp#L642);
 - variadic template to extend Expansion to handle reference points dependent kernels;
-- add methods for setting params;
 - decide if memorizing kernel evaluation within the kernel class;
-- check return value within if statement;
+- Add Hessian and Params Hessian in all the kernels
+- Add Polynomial and Cosine Kernels
+- Force inline function to avoid code repetition
 
 ### Authors/Maintainers
 - Bernardo Fichera (bernardo.fichera@epfl.ch)
@@ -23,17 +23,13 @@ This library depends on Eigen for the linear algebra. The latest git version is 
 git clone https://gitlab.com/libeigen/eigen.git (git@gitlab.com:libeigen/eigen.git)
 cd eigen && mkdir build && cmake .. && (sudo) make install
 ```
-For various utilities the library depends on Corrade utility library.
-```sh
-git clone https://github.com/mosra/corrade.git (git@github.com:mosra/corrade.git)
-cd corrade && mkdir build && cmake .. && make && (sudo) make install
-```
+
 Other (optional) dependencies for improving performances required by Eigen are:
-- Linear Algebra -> LAPACK, BLAS, MKL
-- Multi-threading -> OPENMP, TBB
+- Linear Algebra -> LAPACK, BLAS, OPENBLAS, ATLAS, MKL
+- Multi-threading -> OPENMP (TBB)
 
 ### Installation
-Clone the repository including the submodules
+Clone the repository including the sub-modules
 ```sh
 git clone --recursive https://github.com/nash169/kernel-lib.git (git@github.com:nash169/kernel-lib.git)
 ```
@@ -71,7 +67,7 @@ In order to set the desired compiler define the environment variable CXX=<g++,cl
 
 It is highly recommended to compile with AVX support
 ```sh
-waf (./waf) configure --optional-flags
+waf (./waf) configure --release
 ```
 Activate multi-threading outside EIGEN
 ```sh
@@ -96,7 +92,7 @@ waf (./waf) configure --eigen-lapack
 ```
 Enable BLAS
 ```sh
-waf (./waf) configure --eigen-blas
+waf (./waf) configure --eigen-blas=<blas|openblas|atlas>
 ```
 Enable MKL
 ```sh
@@ -105,19 +101,35 @@ waf (./waf) configure --eigen-mkl
 ##### MKL derived options
 By default MKL uses `sequential` option. If you choose OpenMP multi-threading it is possible select between the GNU (default), `gnu`, or Intel, `intel`, version through `--mkl-openmp` option.
 ```sh
-waf (./waf) configure --mkl-threading=<sequential|openmp|tbb> -mkl-openmp=<gnu|intel>
+waf (./waf) configure --mkl-threading=<sequential|openmp|tbb> -mkl-openmp=<gnu|intel> --mkl-64=<true|false>
 ```
-##### Suggested configuration
+##### Suggested configurations
 ```sh
-waf (./waf) configure --optional-flags --multi-threading --eigen-openmp --eigen-lapack --eigen-blas --eigen-mkl --mkl-threading=tbb
+waf (./waf) configure --release --multi-threading --eigen-openmp --eigen-lapack --eigen-blas=blas
+```
+```sh
+waf (./waf) configure --release --multi-threading --eigen-openmp --eigen-mkl --mkl-threading=tbb --mkl-64
 ```
 
 ### Examples
 ```sh
-./build/src/examples/create_kernel
+./build/src/examples/create_kernels
+```
+
+### Benchmarks
+```sh
+./build/src/benchmarks/bench_rbf
+```
+
+### Tests
+```sh
+./build/src/tests/check_kernel
+```
+```sh
+./build/src/tests/check_grad
 ```
 
 ### Plot
 ```sh
-python (python3) rsc/plot.py
+python (python3) scripts/plot.py rsc/rbf_spherical.csv
 ```
