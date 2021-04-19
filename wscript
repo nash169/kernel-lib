@@ -17,7 +17,7 @@ def options(opt):
     opt.load("compiler_cxx")
 
     # Load tools options
-    opt.load("flags eigen corrade utils_cpp", tooldir="waf_tools")
+    opt.load("flags eigen utils_cpp", tooldir="waf_tools")
 
     # Add options
     opt.add_option("--shared",
@@ -47,7 +47,7 @@ def configure(cfg):
     cfg.get_env()["requires"] += ["EIGEN", "CORRADE"]
 
     # Load tools configuration
-    cfg.load("flags eigen corrade utils_cpp", tooldir="waf_tools")
+    cfg.load("flags eigen utils_cpp", tooldir="waf_tools")
 
     # Activate OPENMP if parellel option is active
     if cfg.options.multi_threading:
