@@ -1,7 +1,7 @@
 #ifndef KERNEL_LIB_KERNELS_SQUARED_EXP_ARD
 #define KERNEL_LIB_KERNELS_SQUARED_EXP_ARD
 
-#include "kernel_lib/kernels/AbstractKernel2.hpp"
+#include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/helper.hpp"
 
 namespace kernel_lib {
@@ -14,15 +14,15 @@ namespace kernel_lib {
 
     namespace kernels {
         template <typename Params>
-        class SquaredExpArd : public AbstractKernel2<Params> {
+        class SquaredExpArd : public AbstractKernel<Params> { // Automatic Relevance Determination
         public:
             SquaredExpArd() : _l(Params::exp_sq_ard::l().array().exp())
             {
-                AbstractKernel2<Params>::_params = Eigen::VectorXd(this->sizeParams());
+                AbstractKernel<Params>::_params = Eigen::VectorXd(this->sizeParams());
 
-                AbstractKernel2<Params>::init();
+                AbstractKernel<Params>::init();
 
-                AbstractKernel2<Params>::_params.segment(2, _l.rows()) = Params::exp_sq_ard::l();
+                AbstractKernel<Params>::_params.segment(2, _l.rows()) = Params::exp_sq_ard::l();
             }
 
             /* Gradient */
@@ -35,7 +35,7 @@ namespace kernel_lib {
                 Eigen::MatrixXd grad(x_samples * y_samples, n_features);
 
                 Eigen::Array<double, 1, Eigen::Dynamic> d = -0.5 * _l.array().pow(2).inverse(),
-                                                        s2i = ((i) ? AbstractKernel2<Params>::_sf2 : -AbstractKernel2<Params>::_sf2) * _l.array().pow(2).inverse();
+                                                        s2i = ((i) ? AbstractKernel<Params>::_sf2 : -AbstractKernel<Params>::_sf2) * _l.array().pow(2).inverse();
 
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
@@ -62,8 +62,13 @@ namespace kernel_lib {
 
                 Eigen::MatrixXd grad(x_samples * y_samples, 2 + _l.rows());
 
-                double sf_d = 2 * AbstractKernel2<Params>::_sf2, sn_d = 2 * AbstractKernel2<Params>::_sn2;
-                Eigen::Array<double, 1, Eigen::Dynamic> l2_i = _l.array().pow(2).inverse(), d = -0.5 * l2_i, m = AbstractKernel2<Params>::_sf2 * l2_i;
+                // Signal and noise variance derivative in log space (sqrt if variances if not log space)
+                double sf_d = 2 * AbstractKernel<Params>::_sf2,
+                       sn_d = 2 * AbstractKernel<Params>::_sn2;
+
+                // Constant multiplication factors calculated in log space (pow(3) inverse if not log space)
+                Eigen::Array<double, 1, Eigen::Dynamic> d = -0.5 * _l.array().pow(2).inverse(),
+                                                        m = AbstractKernel<Params>::_sf2 * _l.array().pow(2).inverse();
 
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
@@ -101,8 +106,8 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        k(i, j) = AbstractKernel2<Params>::_sf2 * std::exp(((x.row(i) - y.row(j)).array().square() * d).sum())
-                            + ((j == i && &x == &y) ? AbstractKernel2<Params>::_sn2 + 1e-8 : 0);
+                        k(i, j) = AbstractKernel<Params>::_sf2 * std::exp(((x.row(i) - y.row(j)).array().square() * d).sum())
+                            + ((j == i && &x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
 
                 return k;
             }
@@ -110,7 +115,7 @@ namespace kernel_lib {
             /* Set specific kernel parameters */
             void setParameters(const Eigen::VectorXd& params)
             {
-                AbstractKernel2<Params>::_params.segment(2, _l.rows()) = params;
+                AbstractKernel<Params>::_params.segment(2, _l.rows()) = params;
                 _l = params.array().exp();
             }
 

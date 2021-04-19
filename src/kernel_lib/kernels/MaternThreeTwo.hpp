@@ -1,7 +1,7 @@
 #ifndef KERNELLIB_KERNELS_MATERNTHREETWO_HPP
 #define KERNELLIB_KERNELS_MATERNTHREETWO_HPP
 
-#include "kernel_lib/kernels/AbstractKernel2.hpp"
+#include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/macros.hpp"
 #include "kernel_lib/tools/math.hpp"
 
@@ -16,11 +16,11 @@ namespace kernel_lib {
 
     namespace kernels {
         template <typename Params>
-        class MaternThreeTwo : public AbstractKernel2<Params> {
+        class MaternThreeTwo : public AbstractKernel<Params> {
         public:
             MaternThreeTwo()
             {
-                AbstractKernel2<Params>::init();
+                AbstractKernel<Params>::init();
             }
 
             /* Evaluate gradient */

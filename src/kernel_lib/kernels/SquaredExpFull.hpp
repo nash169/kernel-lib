@@ -1,7 +1,7 @@
 #ifndef KERNEL_LIB_KERNELS_SQUARED_EXP_FULL
 #define KERNEL_LIB_KERNELS_SQUARED_EXP_FULL
 
-#include "kernel_lib/kernels/AbstractKernel2.hpp"
+#include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/helper.hpp"
 
 namespace kernel_lib {
@@ -14,17 +14,17 @@ namespace kernel_lib {
 
     namespace kernels {
         template <typename Params>
-        class SquaredExpFull : public AbstractKernel2<Params> {
+        class SquaredExpFull : public AbstractKernel<Params> {
         public:
             SquaredExpFull() : _S(Params::exp_sq_full::l())
             {
                 _S = _S.reshaped(std::sqrt(_S.rows()), std::sqrt(_S.rows()));
 
-                AbstractKernel2<Params>::_params = Eigen::VectorXd(this->sizeParams());
+                AbstractKernel<Params>::_params = Eigen::VectorXd(this->sizeParams());
 
-                AbstractKernel2<Params>::init();
+                AbstractKernel<Params>::init();
 
-                AbstractKernel2<Params>::_params.segment(2, _S.size()) = Params::exp_sq_full::l();
+                AbstractKernel<Params>::_params.segment(2, _S.size()) = Params::exp_sq_full::l();
             }
 
             /* Gradient */
@@ -37,11 +37,12 @@ namespace kernel_lib {
                 Eigen::MatrixXd grad(x_samples * y_samples, n_features);
 
                 Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::cholesky(_S);
+                double sf2 = ((i) ? AbstractKernel<Params>::_sf2 : -AbstractKernel<Params>::_sf2);
 
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        grad.row(j * x_samples + i) = AbstractKernel2<Params>::_sf2 * U.solve((x.row(i) - y.row(j)).transpose())
+                        grad.row(j * x_samples + i) = sf2 * U.solve((x.row(i) - y.row(j)).transpose())
                             * std::exp(U.matrixL().solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
 
                 return grad;
@@ -64,7 +65,7 @@ namespace kernel_lib {
 
                 Eigen::MatrixXd grad(x_samples * y_samples, 2 + n_params);
 
-                double sf_d = 2 * AbstractKernel2<Params>::_sf2, sn_d = 2 * AbstractKernel2<Params>::_sn2;
+                double sf_d = 2 * AbstractKernel<Params>::_sf2, sn_d = 2 * AbstractKernel<Params>::_sn2;
                 Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> U = tools::cholesky(_S);
 
 #pragma omp parallel for collapse(2)
@@ -72,7 +73,7 @@ namespace kernel_lib {
                     for (size_t i = 0; i < x_samples; i++) {
                         double k = std::exp(U.matrixL().solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5);
                         Eigen::VectorXd prod = U.solve((x.row(i) - y.row(j)).transpose());
-                        grad.row(j * x_samples + i) << sf_d * k, (j == i && &x == &y) ? sn_d : 0, (prod * prod.transpose()).reshaped(1, n_params) * k;
+                        grad.row(j * x_samples + i) << sf_d * k, (j == i && &x == &y) ? sn_d : 0, (prod * prod.transpose()).reshaped(1, n_params) * k * AbstractKernel<Params>::_sf2;
                     }
 
                 return grad;
@@ -102,8 +103,8 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        k(i, j) = AbstractKernel2<Params>::_sf2 * std::exp(U.matrixL().solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5)
-                            + ((j == i && &x == &y) ? AbstractKernel2<Params>::_sn2 + 1e-8 : 0);
+                        k(i, j) = AbstractKernel<Params>::_sf2 * std::exp(U.matrixL().solve((x.row(i) - y.row(j)).transpose()).squaredNorm() * -0.5)
+                            + ((j == i && &x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
 
                 return k;
             }
@@ -111,7 +112,7 @@ namespace kernel_lib {
             /* Set specific kernel parameters */
             void setParameters(const Eigen::VectorXd& params)
             {
-                AbstractKernel2<Params>::_params.segment(2, _S.size()) = params;
+                AbstractKernel<Params>::_params.segment(2, _S.size()) = params;
                 _S = params.reshaped(_S.rows(), _S.cols());
             }
 

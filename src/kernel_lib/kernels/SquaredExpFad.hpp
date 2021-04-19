@@ -1,7 +1,7 @@
 #ifndef KERNELLIB_KERNELS_SQUAREDEXPFAD_HPP
 #define KERNELLIB_KERNELS_SQUAREDEXPFAD_HPP
 
-#include "kernel_lib/kernels/AbstractKernel2.hpp"
+#include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/macros.hpp"
 #include "kernel_lib/tools/math.hpp"
 
@@ -16,11 +16,11 @@ namespace kernel_lib {
 
     namespace kernels {
         template <typename Params>
-        class SquaredExpFad : public AbstractKernel2<Params> {
+        class SquaredExpFad : public AbstractKernel<Params> { // Factor Analysis Distance
         public:
             SquaredExpFad()
             {
-                AbstractKernel2<Params>::init();
+                AbstractKernel<Params>::init();
             }
 
             /* Evaluate gradient */

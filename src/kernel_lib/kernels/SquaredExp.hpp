@@ -1,7 +1,7 @@
 #ifndef KERNEL_LIB_SQUARED_EXP
 #define KERNEL_LIB_SQUARED_EXP
 
-#include "kernel_lib/kernels/AbstractKernel2.hpp"
+#include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/helper.hpp"
 
 namespace kernel_lib {
@@ -14,18 +14,30 @@ namespace kernel_lib {
 
     namespace kernels {
         template <typename Params>
-        class SquaredExp : public AbstractKernel2<Params> {
+        class SquaredExp : public AbstractKernel<Params> {
         public:
             SquaredExp() : _l(std::exp(Params::exp_sq::l()))
             {
-                AbstractKernel2<Params>::_params = Eigen::VectorXd(this->sizeParams());
+                AbstractKernel<Params>::_params = Eigen::VectorXd(this->sizeParams());
 
-                AbstractKernel2<Params>::init();
+                AbstractKernel<Params>::init();
 
-                AbstractKernel2<Params>::_params(2) = Params::exp_sq::l();
+                AbstractKernel<Params>::_params(2) = Params::exp_sq::l();
             }
 
-            /* Gradient */
+            /**
+             * @brief Kernel Gradient with respect to the input spaces x and y
+             *
+             * @tparam None
+             * 
+             * @param[in] x First input variable
+             * @param[in] y Second input variable
+             * @param[in] i (default i=0) select gradient space
+             * 
+             * @note None
+             *
+             * @return Returns the kernel gradient with respect to x (i=0) or y (i=1)
+             */
             Eigen::MatrixXd gradient(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const size_t& i = 0) const
             {
                 size_t x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
@@ -34,7 +46,7 @@ namespace kernel_lib {
 
                 Eigen::MatrixXd grad(x_samples * y_samples, n_features);
 
-                double d = -0.5 / std::pow(_l, 2), s2i = ((i) ? 1 : -1) / std::pow(_l, 2) * AbstractKernel2<Params>::_sf2;
+                double d = -0.5 / std::pow(_l, 2), s2i = ((i) ? 1 : -1) / std::pow(_l, 2) * AbstractKernel<Params>::_sf2;
 
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
@@ -44,7 +56,19 @@ namespace kernel_lib {
                 return grad;
             }
 
-            /* Hessian */
+            /**
+             * @brief Kernel Hessian with respect to the input spaces xx, yy, xy (yx)
+             *
+             * @tparam None
+             * 
+             * @param[in] x First input variable
+             * @param[in] y Second input variable
+             * @param[in] i (default i=0) select gradient space
+             * 
+             * @note None
+             *
+             * @return Returns the kernel hessian with respect to xx (i=0), yy (i=1), xy (i=2)
+             */
             Eigen::MatrixXd hessian(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y, const size_t& i = 0) const
             {
                 Eigen::MatrixXd hess;
@@ -61,22 +85,18 @@ namespace kernel_lib {
 
                 Eigen::MatrixXd grad(x_samples * y_samples, 3);
 
-                double l2_i = 1 / std::pow(_l, 2), d = -0.5 * l2_i, m = AbstractKernel2<Params>::_sf2 * l2_i,
-                       sf_d = 2 * AbstractKernel2<Params>::_sf2, sn_d = 2 * AbstractKernel2<Params>::_sn2,
-                       n2, k;
-
-                size_t index;
+                // Constant multiplication factors (derivative in log space)
+                double l2_i = 1 / std::pow(_l, 2),
+                       d = -0.5 * l2_i,
+                       m = AbstractKernel<Params>::_sf2 * l2_i,
+                       sf_d = 2 * AbstractKernel<Params>::_sf2,
+                       sn_d = 2 * AbstractKernel<Params>::_sn2;
 
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++) {
-                        n2 = (x.row(i) - y.row(j)).squaredNorm();
-                        k = std::exp(n2 * d);
-
-                        index = j * x_samples + i;
-                        grad(index, 0) = sf_d * k;
-                        grad(index, 1) = (j == i && &x == &y) ? sn_d : 0;
-                        grad(index, 2) = m * n2 * k;
+                        double n2 = (x.row(i) - y.row(j)).squaredNorm(), k = std::exp(n2 * d);
+                        grad.row(j * x_samples + i) << sf_d * k, (j == i && &x == &y) ? sn_d : 0, m * n2 * k;
                     }
 
                 return grad;
@@ -92,6 +112,7 @@ namespace kernel_lib {
         protected:
             double _l;
 
+            // Try to force inline if possible
             // inline void foo (const char) __attribute__((always_inline)); Strong Inline
 
             /* Kernel */
@@ -112,10 +133,10 @@ namespace kernel_lib {
 
                 k *= d;
 
-                k = AbstractKernel2<Params>::_sf2 * k.array().exp();
+                k = AbstractKernel<Params>::_sf2 * k.array().exp();
 
                 if (&x == &y)
-                    k.diagonal().array() += AbstractKernel2<Params>::_sn2;
+                    k.diagonal().array() += AbstractKernel<Params>::_sn2;
 #else
 #ifdef EIGEN_USE_MKL_ALL
 #pragma omp parallel for collapse(2)
@@ -123,16 +144,16 @@ namespace kernel_lib {
                     for (size_t i = 0; i < x.rows(); i++)
                         k(i, j) = (x.row(i) - y.row(j)).squaredNorm() * d;
 
-                k = AbstractKernel2<Params>::_sf2 * k.array().exp();
+                k = AbstractKernel<Params>::_sf2 * k.array().exp();
 
                 if (&x == &y)
-                    k.diagonal().array() += AbstractKernel2<Params>::_sn2;
+                    k.diagonal().array() += AbstractKernel<Params>::_sn2;
 #else
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        k(i, j) = AbstractKernel2<Params>::_sf2 * std::exp((x.row(i) - y.row(j)).squaredNorm() * d)
-                            + ((j == i && &x == &y) ? AbstractKernel2<Params>::_sn2 + 1e-8 : 0);
+                        k(i, j) = AbstractKernel<Params>::_sf2 * std::exp((x.row(i) - y.row(j)).squaredNorm() * d)
+                            + ((j == i && &x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
 #endif
 #endif
                 return k;
@@ -141,7 +162,7 @@ namespace kernel_lib {
             /* Set specific kernel parameters */
             void setParameters(const Eigen::VectorXd& params)
             {
-                AbstractKernel2<Params>::_params(2) = params(0);
+                AbstractKernel<Params>::_params(2) = params(0);
                 _l = std::exp(params(0));
             }
 
