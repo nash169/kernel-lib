@@ -15,7 +15,7 @@ namespace kernel_lib {
     } // namespace defaults
 
     namespace kernels {
-        template <typename Params>
+        template <typename Params, typename EigenFunctions>
         class RiemannSqExp : public AbstractKernel<Params> {
         public:
             RiemannSqExp()
