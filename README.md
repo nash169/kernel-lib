@@ -8,6 +8,7 @@ Here is a list of features to implement or unsolved issues:
 - Add Hessian and Params Hessian in all the kernels
 - Add Polynomial and Cosine Kernels
 - Force inline function to avoid code repetition
+- Template headers separation (https://doc.magnum.graphics/magnum/compilation-speedup.html)
 
 ### Authors/Maintainers
 - Bernardo Fichera (bernardo.fichera@epfl.ch)

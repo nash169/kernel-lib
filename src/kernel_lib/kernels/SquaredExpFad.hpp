@@ -5,6 +5,13 @@
 #include "kernel_lib/tools/macros.hpp"
 #include "kernel_lib/tools/math.hpp"
 
+/*
+For implemention check:
+https://stats.stackexchange.com/questions/351549/maximum-likelihood-estimators-multivariate-gaussian
+https://math.stackexchange.com/questions/2867022/derivation-of-derivative-of-multivariate-gaussian-w-r-t-covariance-matrix
+https://stats.stackexchange.com/questions/27436/how-to-take-derivative-of-multivariate-normal-density
+*/
+
 namespace kernel_lib {
 
     namespace defaults {
