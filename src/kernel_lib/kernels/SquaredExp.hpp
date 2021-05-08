@@ -18,11 +18,17 @@ namespace kernel_lib {
         public:
             SquaredExp() : _l(std::exp(Params::exp_sq::l()))
             {
+                /* Init parameters vector dimension */
                 AbstractKernel<Params>::_params = Eigen::VectorXd(this->sizeParams());
 
+                /* Set signal and noise variance */
                 AbstractKernel<Params>::init();
 
+                /* Set specific kernel parameters */
                 AbstractKernel<Params>::_params(2) = Params::exp_sq::l();
+
+                /* Init parameters vector dimension */
+                _d = -0.5 / std::pow(_l, 2);
             }
 
             /**
@@ -110,12 +116,9 @@ namespace kernel_lib {
             }
 
         protected:
-            double _l;
+            double _l, _d;
 
-            // Try to force inline if possible
-            // inline void foo (const char) __attribute__((always_inline)); Strong Inline
-
-            /* Kernel */
+            /* Kernel evaluation for multiple points */
             Eigen::MatrixXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
             {
                 size_t x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
@@ -151,12 +154,33 @@ namespace kernel_lib {
 #else
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
-                    for (size_t i = 0; i < x_samples; i++)
-                        k(i, j) = AbstractKernel<Params>::_sf2 * std::exp((x.row(i) - y.row(j)).squaredNorm() * d)
-                            + ((j == i && &x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
+                    for (size_t i = 0; i < x_samples; i++) {
+                        // k(i, j) = AbstractKernel<Params>::_sf2 * std::exp((x.row(i) - y.row(j)).squaredNorm() * d)
+                        //     + ((j == i && &x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
+
+                        Eigen::Matrix<double, 2, 1> a = x.row(i), b = y.row(i);
+                        k(i, j) = kernel(a, b);
+
+                        // k(i, j) = kernel(x.row(i), y.row(i));
+                    }
+
 #endif
 #endif
                 return k;
+            }
+
+            /* Overload kernel for handling single sample evaluation */
+            template <typename Derived>
+            inline __attribute__((always_inline)) double kernel(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
+            {
+                return AbstractKernel<Params>::_sf2 * std::exp((x - y).squaredNorm() * _d) + ((&x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
+            }
+
+            /* Overload kernel for handling single sample evaluation (fastest solution but there is some issue for inferring size) */
+            template <int size>
+            inline __attribute__((always_inline)) double kernel(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& y) const
+            {
+                return AbstractKernel<Params>::_sf2 * std::exp((x - y).squaredNorm() * _d) + ((&x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
             }
 
             /* Set specific kernel parameters */
