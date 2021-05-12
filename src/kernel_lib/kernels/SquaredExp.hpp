@@ -29,6 +29,31 @@ namespace kernel_lib {
 
                 /* Init parameters vector dimension */
                 _d = -0.5 / std::pow(_l, 2);
+                _g = -1 / std::pow(_l, 2) * AbstractKernel<Params>::_sf2;
+            }
+
+            template <int size>
+            Eigen::MatrixXd kernelTest(const Eigen::Matrix<double, Eigen::Dynamic, size>& x, const Eigen::Matrix<double, Eigen::Dynamic, size>& y) const
+            {
+                size_t x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
+
+                REQUIRED_DIMENSION(n_features == y.cols(), "Y must have the same dimension of X")
+
+                Eigen::MatrixXd k(x_samples, y_samples);
+
+#pragma omp parallel for collapse(2)
+                for (size_t j = 0; j < y_samples; j++)
+                    for (size_t i = 0; i < x_samples; i++) {
+                        // k(i, j) = AbstractKernel<Params>::_sf2 * std::exp((x.row(i) - y.row(j)).squaredNorm() * d)
+                        //     + ((j == i && &x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
+
+                        // Eigen::Matrix<double, size, 1> a = x.row(i), b = y.row(i);
+                        // k(i, j) = kernel(a, b);
+
+                        k(i, j) = kernel<2>(x.row(i), y.row(i));
+                    }
+
+                return k;
             }
 
             /**
@@ -116,7 +141,7 @@ namespace kernel_lib {
             }
 
         protected:
-            double _l, _d;
+            double _l, _d, _g;
 
             /* Kernel evaluation for multiple points */
             Eigen::MatrixXd kernel(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
@@ -170,17 +195,26 @@ namespace kernel_lib {
             }
 
             /* Overload kernel for handling single sample evaluation */
-            template <typename Derived>
-            inline __attribute__((always_inline)) double kernel(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
-            {
-                return AbstractKernel<Params>::_sf2 * std::exp((x - y).squaredNorm() * _d) + ((&x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
-            }
+            // template <typename Derived>
+            // inline __attribute__((always_inline)) double kernel(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
+            // {
+            //     // std::cout << "MatrixDerived" << std::endl;
+            //     return AbstractKernel<Params>::_sf2 * std::exp((x - y).squaredNorm() * _d) + ((&x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
+            // }
 
             /* Overload kernel for handling single sample evaluation (fastest solution but there is some issue for inferring size) */
             template <int size>
             inline __attribute__((always_inline)) double kernel(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& y) const
             {
+                // std::cout << "MatrixStatic" << std::endl;
                 return AbstractKernel<Params>::_sf2 * std::exp((x - y).squaredNorm() * _d) + ((&x == &y) ? AbstractKernel<Params>::_sn2 + 1e-8 : 0);
+            }
+
+            /* Overload gradient for handling single sample evaluation (fastest solution but there is some issue for inferring size) */
+            template <int size>
+            inline __attribute__((always_inline)) Eigen::Matrix<double, size, 1> gradient(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& y) const
+            {
+                return _g * (x - y) * std::exp((x - y).squaredNorm() * _d);
             }
 
             /* Set specific kernel parameters */
