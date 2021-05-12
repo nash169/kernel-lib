@@ -1,6 +1,6 @@
 #include <iostream>
-
 #include <kernel_lib/Kernel.hpp>
+#include <utils_cpp/UtilsCpp.hpp>
 
 using namespace kernel_lib;
 
@@ -15,24 +15,45 @@ struct Params {
     };
 };
 
+template <int size>
+struct Function : kernels::SquaredExp<Params> {
+    Eigen::Matrix<double, size, 1> y = Eigen::VectorXd::Zero(size);
+
+    double operator()(const Eigen::Matrix<double, size, 1>& x) const
+    {
+        return kernels::SquaredExp<Params>::kernel(x, y);
+    }
+};
+
+template <int size>
+struct Gradient : kernels::SquaredExp<Params> {
+    Eigen::Matrix<double, size, 1> y = Eigen::VectorXd::Zero(size);
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x) const
+    {
+        return kernels::SquaredExp<Params>::gradient(x, y);
+    }
+};
+
 int main(int argc, char const* argv[])
 {
-    std::cout << "Test" << std::endl;
-
     using Kernel_t = kernels::SquaredExp<Params>;
     Kernel_t k;
 
-    size_t dim = 2, num_test = 10;
+    constexpr int dim = 2;
 
-    Eigen::VectorXd val(num_test);
+    Eigen::VectorXd x = Eigen::VectorXd::Random(dim);
 
-    Eigen::MatrixXd x = Eigen::MatrixXd::Random(num_test, dim),
-                    y = Eigen::MatrixXd::Random(1, dim),
-                    p = Eigen::MatrixXd::Random(num_test, dim) * 0.1;
+    std::cout << "Function test" << std::endl;
+    std::cout << Function<dim>()(x) << std::endl;
 
-    val = k(x + p, y).reshaped(num_test, 1) - k(x, y).reshaped(num_test, 1) - k.gradient(x, y).cwiseProduct(p).rowwise().sum();
+    std::cout << "Gradient test" << std::endl;
+    std::cout << Gradient<dim>()(x).transpose() << std::endl;
 
-    std::cout << val << std::endl;
+    utils_cpp::DerivativeChecker checker(dim);
+
+    if (checker.checkGradient(Function<dim>(), Gradient<dim>()))
+        std::cout << "The gradient is correct!" << std::endl;
 
     return 0;
 }
