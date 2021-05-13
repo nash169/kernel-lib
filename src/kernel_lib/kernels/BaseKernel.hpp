@@ -23,7 +23,37 @@ namespace kernel_lib {
             BaseKernel() : _sf2(std::exp(2 * Params::kernel::sf())), _sn2(std::exp(2 * Params::kernel::sn())) {}
 
             /* Evaluate kernel */
-            // Eigen::MatrixXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const { return this->kernel(x, y); }
+            //             template <int T>
+            //             Eigen::MatrixXd operator()(const Eigen::Matrix<double, Eigen::Dynamic, T>& x, const Eigen::Matrix<double, Eigen::Dynamic, T>& y) const
+            //             {
+            //                 size_t x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
+
+            //                 Eigen::MatrixXd k(x_samples, y_samples);
+
+            // #pragma omp parallel for collapse(2)
+            //                 for (size_t j = 0; j < y_samples; j++)
+            //                     for (size_t i = 0; i < x_samples; i++) {
+            //                         Eigen::Matrix<double, size, 1> a = x.row(i), b = y.row(i);
+            //                         k(i, j) = static_cast<const Kernel*>(this)->kernel(a, b);
+            //                     }
+
+            //                 return k;
+            //             }
+
+            Eigen::MatrixXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y) const
+            {
+                size_t x_samples = x.rows(), y_samples = y.rows(), n_features = x.cols();
+
+                Eigen::MatrixXd k(x_samples, y_samples);
+
+#pragma omp parallel for collapse(2)
+                for (size_t j = 0; j < y_samples; j++)
+                    for (size_t i = 0; i < x_samples; i++) {
+                        k(i, j) = static_cast<const Kernel*>(this)->kernel(x.row(i), y.row(i));
+                    }
+
+                return k;
+            }
 
             /* Parameters */
             Eigen::VectorXd params() const

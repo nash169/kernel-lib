@@ -28,11 +28,11 @@ int main(int argc, char const* argv[])
     size_t dim = 2, num_samples = 20000;
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_samples, dim), Y = Eigen::MatrixXd::Random(num_samples, dim);
 
-    // std::cout << "BENCHMARK: Kernel evaluation" << std::endl;
-    // {
-    //     utils_cpp::Timer timer;
-    //     k.kernelTest(X, X);
-    // }
+    std::cout << "BENCHMARK: Kernel evaluation" << std::endl;
+    {
+        utils_cpp::Timer timer;
+        k(X, X);
+    }
 
     return 0;
 }
