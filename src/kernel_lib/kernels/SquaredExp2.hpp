@@ -37,7 +37,7 @@ namespace kernel_lib {
             inline __attribute__((always_inline)) double kernel(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
             {
                 // std::cout << "MatrixDerived" << std::endl;
-                return BaseKernel<Params, SquaredExp2<Params>>::_sf2 * std::exp((x - y).squaredNorm() * _d) + ((&x == &y) ? BaseKernel<Params, SquaredExp2<Params>>::_sn2 + 1e-8 : 0);
+                return std::exp((x - y).squaredNorm() * _d) + ((&x == &y) ? BaseKernel<Params, SquaredExp2<Params>>::_sn2 + 1e-8 : 0);
             }
 
             /* Overload kernel for handling single sample evaluation (fastest solution but there is some issue for inferring size) */
