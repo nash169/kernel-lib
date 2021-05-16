@@ -39,13 +39,13 @@ int main(int argc, char const* argv[])
         0.097540404999410, 0.278498218867048;
 
     // Params
-    Eigen::VectorXd params(6);
-    // params << std::log(1.5), std::log(2.0), std::log(0.7);
+    Eigen::VectorXd params(3);
+    params << std::log(1.5), std::log(2.0), std::log(0.7);
     // params << std::log(1.5), std::log(2.0), std::log(0.7), std::log(1.3);
-    params << std::log(1.5), std::log(2.0), 6.5, 2.5, 2.5, 6.5;
+    // params << std::log(1.5), std::log(2.0), 6.5, 2.5, 2.5, 6.5;
 
     std::cout << "KERNEL CREATION AND PARAMS SIZE" << std::endl;
-    using Kernel_t = kernels::SquaredExpFull<Params>;
+    using Kernel_t = kernels::SquaredExp<Params>;
     Kernel_t k;
     std::cout << k.sizeParams() << std::endl;
 
