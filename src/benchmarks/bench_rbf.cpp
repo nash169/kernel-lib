@@ -2,10 +2,10 @@
 #include <iostream>
 #include <thread>
 
-#include <kernel_lib/Kernel.hpp>
 #include <utils_cpp/UtilsCpp.hpp>
 
-// #include <kernel_lib/kernels/SquaredExp2.hpp>
+// #include <kernel_lib/kernels/SquaredExp.hpp>
+#include <kernel_lib/kernels/SquaredExp2.hpp>
 
 using namespace kernel_lib;
 
@@ -22,17 +22,19 @@ struct Params {
 
 int main(int argc, char const* argv[])
 {
-    // using Kernel_t = kernels::SquaredExp2<Params>;
-    using Kernel_t = kernels::SquaredExp<Params>;
-    Kernel_t k;
+    // kernels::SquaredExp<Params> k;
+    kernels::SquaredExp2<Params> k;
 
-    int dim = 2, num_samples = 20000;
+    constexpr int dim = 2, num_samples = 20000;
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_samples, dim), Y = Eigen::MatrixXd::Random(num_samples, dim);
+    // Eigen::Matrix<double, Eigen::Dynamic, dim> X = Eigen::MatrixXd::Random(num_samples, dim), Y = Eigen::MatrixXd::Random(num_samples, dim);
+    Eigen::VectorXd a = Eigen::VectorXd::Random(dim);
 
     std::cout << "BENCHMARK: Kernel evaluation" << std::endl;
     {
         utils_cpp::Timer timer;
-        k(X, X);
+        k.multiGradParams(X, X);
+        // k.gradientParams(X, X);
     }
 
     return 0;
