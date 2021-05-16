@@ -21,7 +21,7 @@ struct Function : kernels::SquaredExp<Params> {
 
     double operator()(const Eigen::Matrix<double, size, 1>& x) const
     {
-        return kernels::SquaredExp<Params>::kernel(x, y);
+        return kernels::SquaredExp<Params>()(x, y);
     }
 };
 
@@ -31,7 +31,7 @@ struct Gradient : kernels::SquaredExp<Params> {
 
     Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x) const
     {
-        return kernels::SquaredExp<Params>::gradient(x, y);
+        return kernels::SquaredExp<Params>::grad(x, y);
     }
 };
 

@@ -1,64 +1,48 @@
 #ifndef KERNELLIB_EXPANSION_UTILS_HPP
 #define KERNELLIB_EXPANSION_UTILS_HPP
 
-#include "kernel_lib/kernels/SquaredExp.hpp"
-
 namespace kernel_lib {
     namespace defaults {
         struct expansion {
-            PARAM_SCALAR(bool, reference_first, true)
         };
     } // namespace defaults
 
     namespace utils {
-        template <typename Params, typename Kernel = kernels::SquaredExp<Params>>
+        template <typename Params, typename Kernel>
         class Expansion {
         public:
-            Expansion() : _kernel(), _reference_first(Params::expansion::reference_first()) {}
+            Expansion() : _kernel() {}
 
-            Eigen::VectorXd operator()(const Eigen::MatrixXd& x)
+            double operator()(const Eigen::VectorXd& x)
             {
-                if (!_weight.size())
-                    _weight = Eigen::VectorXd::Ones(_reference.rows());
-                else
-                    REQUIRED_DIMENSION(_reference.rows() == _weight.rows(), "The number of weights must match the number of reference points (first input)")
+                double r = 0;
 
-                Eigen::MatrixXd psi;
+                for (size_t i = 0; i < _reference.rows(); i++)
+                    r += _weights(i) * _kernel(_reference(i), x);
 
-                if (_reference_first)
-                    psi = _kernel(_reference, x).transpose();
-                else
-                    psi = _kernel(x, _reference).transpose();
-
-                for (size_t i = 0; i < psi.rows(); i++)
-                    psi.row(i) = psi.row(i).cwiseProduct(_weight.transpose());
-
-                return psi.rowwise().sum();
+                return r;
             }
 
-            Eigen::VectorXd operator()(const Eigen::MatrixXd& x, const Eigen::MatrixXd& y)
+            Eigen::VectorXd multiEval(const Eigen::MatrixXd& x)
             {
-                if (_reference_first) {
-                    setReference(x, true);
-                    return (*this)(y);
-                }
-                else {
-                    setReference(y, false);
-                    return (*this)(x);
-                }
+                Eigen::VectorXd r(x.rows());
+
+                for (size_t i = 0; i < r.rows(); i++)
+                    r(i) = (*this)(x.row(i));
+
+                return r;
             }
 
-            Expansion& setReference(const Eigen::MatrixXd& reference, bool reference_first = true)
+            Expansion& setReference(const Eigen::MatrixXd& reference)
             {
                 _reference = reference;
-                _reference_first = reference_first;
 
                 return *this;
             }
 
             Expansion& setWeights(const Eigen::VectorXd& weights)
             {
-                _weight = weights;
+                _weights = weights;
 
                 return *this;
             }
@@ -71,10 +55,8 @@ namespace kernel_lib {
         protected:
             Kernel _kernel;
 
-            Eigen::VectorXd _weight;
+            Eigen::VectorXd _weights;
             Eigen::MatrixXd _reference;
-
-            bool _reference_first;
         };
     } // namespace utils
 } // namespace kernel_lib

@@ -2,10 +2,8 @@
 #include <iostream>
 #include <thread>
 
+#include <kernel_lib/kernels/SquaredExp.hpp>
 #include <utils_cpp/UtilsCpp.hpp>
-
-// #include <kernel_lib/kernels/SquaredExp.hpp>
-#include <kernel_lib/kernels/SquaredExp2.hpp>
 
 using namespace kernel_lib;
 
@@ -22,8 +20,7 @@ struct Params {
 
 int main(int argc, char const* argv[])
 {
-    // kernels::SquaredExp<Params> k;
-    kernels::SquaredExp2<Params> k;
+    kernels::SquaredExp<Params> k;
 
     constexpr int dim = 2, num_samples = 20000;
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_samples, dim), Y = Eigen::MatrixXd::Random(num_samples, dim);
@@ -34,7 +31,6 @@ int main(int argc, char const* argv[])
     {
         utils_cpp::Timer timer;
         k.multiGradParams(X, X);
-        // k.gradientParams(X, X);
     }
 
     return 0;

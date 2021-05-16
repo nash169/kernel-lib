@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <kernel_lib/Kernel.hpp>
+#include <kernel_lib/kernels/SquaredExp.hpp>
 
 using namespace kernel_lib;
 
@@ -12,14 +12,6 @@ struct Params {
 
     struct exp_sq : public defaults::exp_sq {
         PARAM_SCALAR(double, l, 3.1);
-    };
-
-    struct exp_sq_ard : public defaults::exp_sq_ard {
-        PARAM_VECTOR(double, l, 1.1, 0.6);
-    };
-
-    struct exp_sq_full : public defaults::exp_sq_full {
-        PARAM_VECTOR(double, l, 3.1, 4.5, 0.8, 1.2);
     };
 };
 
@@ -58,13 +50,13 @@ int main(int argc, char const* argv[])
     std::cout << k.params().transpose() << std::endl;
 
     std::cout << "KERNEL" << std::endl;
-    std::cout << k(x, y) << std::endl;
+    std::cout << k.gramian(x, y) << std::endl;
 
     std::cout << "GRADIENT" << std::endl;
-    std::cout << k.gradient(x, y) << std::endl;
+    std::cout << k.multiGrad(x, y) << std::endl;
 
     std::cout << "GRADIENT PARAMS" << std::endl;
-    std::cout << k.gradientParams(x, y) << std::endl;
+    std::cout << k.multiGradParams(x, y) << std::endl;
 
     return 0;
 }
