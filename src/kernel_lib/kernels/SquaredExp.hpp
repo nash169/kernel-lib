@@ -22,20 +22,20 @@ namespace kernel_lib {
 
             /* Overload kernel for handling single sample evaluation */
             template <typename Derived>
-            inline __attribute__((always_inline)) double kernel(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
+            EIGEN_ALWAYS_INLINE double kernel(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
             {
                 return std::exp((x - y).squaredNorm() * -0.5 / std::pow(_l, 2));
             }
 
             /* Overload gradient for handling single sample evaluation (fastest solution but there is some issue for inferring size) */
             template <typename Derived>
-            inline __attribute__((always_inline)) auto gradient(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
+            EIGEN_ALWAYS_INLINE auto gradient(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
             {
-                return ((i) ? (x - y) : (y - x)) / std::pow(_l, 2) * kernel(x, y);
+                return ((i) ? (y - x) : (x - y)) / std::pow(_l, 2) * kernel(x, y);
             }
 
             template <typename Derived>
-            inline __attribute__((always_inline)) double gradientParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
+            EIGEN_ALWAYS_INLINE double gradientParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
             {
                 return (x - y).squaredNorm() / std::pow(_l, 2) * kernel(x, y);
             }
