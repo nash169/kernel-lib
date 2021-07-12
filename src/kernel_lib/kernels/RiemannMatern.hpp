@@ -49,6 +49,18 @@ namespace kernel_lib {
                 return r / _n;
             }
 
+            template <typename Derived>
+            inline __attribute__((always_inline)) auto gradient(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
+            {
+                return Eigen::VectorXd::Zero(x.size());
+            }
+
+            template <typename Derived>
+            inline __attribute__((always_inline)) double gradientParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
+            {
+                return 0;
+            }
+
         protected:
             double _l, _nu, _d, _n;
 
