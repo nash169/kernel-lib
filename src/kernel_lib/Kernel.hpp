@@ -3,9 +3,12 @@
 
 /* Kernels */
 #include "kernel_lib/kernels/SquaredExp.hpp"
+#include <kernel_lib/kernels/RiemannSqExp.hpp>
 
 /* Utils */
+#include "kernel_lib/utils/EigenFunction.hpp"
 #include "kernel_lib/utils/Expansion.hpp"
+#include "kernel_lib/utils/Graph.hpp"
 
 /* Tools */
 #include "kernel_lib/tools/helper.hpp"
