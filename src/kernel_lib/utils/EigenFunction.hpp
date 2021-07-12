@@ -6,14 +6,14 @@
 
 namespace kernel_lib {
     namespace utils {
-        template <int size, typename Function>
+        template <typename Function>
         class EigenFunction {
         public:
             EigenFunction() {}
 
             // virtual inline double operator()(const Eigen::Matrix<double, size, 1>& x, const size_t& i) const = 0;
 
-            virtual inline double operator()(const Eigen::Matrix<double, size, 1>& x, const double& eigenvalue) const = 0;
+            virtual inline double operator()(const Eigen::Matrix<double, Eigen::Dynamic, 1>& x, const double& eigenvalue) const = 0;
 
             std::vector<Function>& eigenFunctions()
             {
@@ -35,6 +35,7 @@ namespace kernel_lib {
             void addEigenFunctions(T value, Ts... args)
             {
                 _eigen_fun.push_back(value);
+
                 if constexpr (sizeof...(args) > 0)
                     addEigenFunctions(args...);
             }
@@ -50,8 +51,11 @@ namespace kernel_lib {
             void addEigenPair(const double& eigenvalue, const Function& eigenfunction, Args... args)
             {
                 _eigen_pair.insert(std::make_pair(eigenvalue, eigenfunction));
+
                 if constexpr (sizeof...(args) > 0)
                     addEigenPair(args...);
+
+                // std::cout << _eigen_pair.size() << std::endl;
             }
 
         protected:
