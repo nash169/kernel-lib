@@ -11,14 +11,21 @@ APPNAME = "kernel-lib"
 srcdir = "."
 blddir = "build"
 
+# Tools' name and directory
+tools = {"utils_cpp": "/home/bernardo/devs/utils-cpp/install"}
+
 
 def options(opt):
     # Load modules necessary in the configuration function
     opt.load("compiler_cxx")
 
-    # Load tools options
-    opt.load("utils_cpp", tooldir="/usr/local/share/waf")
-    opt.load("flags eigen utils_cpp", tooldir="waf_tools")
+    # Load personal tools options
+    for key in tools:
+        opt.load(key, tooldir=os.path.join(
+            tools[key], "share/waf"))
+
+    # Load external tools options
+    opt.load("flags eigen", tooldir="waf_tools")
 
     # Add options
     opt.add_option("--shared",
@@ -42,13 +49,18 @@ def configure(cfg):
     cfg.env.SUFFIX = "dylib" if cfg.env["DEST_OS"] == "darwin" else "so"
 
     # Load compiler configuration and generate clangd flags
-    cfg.load("compiler_cxx")  # cfg.load("clang_compilation_database")
+    cfg.load("compiler_cxx")
+    cfg.load("clang_compilation_database")
 
     # Define require libraries
     cfg.get_env()["requires"] += ["EIGEN", "CORRADE"]
 
-    # Load tools configuration
-    cfg.load("utils_cpp", tooldir="/usr/local/share/waf")
+    # Load personal tools configurations
+    for key in tools:
+        cfg.load(key, tooldir=os.path.join(
+            tools[key], "share/waf"))
+
+    # Load external tools configurations
     cfg.load("flags eigen", tooldir="waf_tools")
 
     # Activate OPENMP if parellel option is active
@@ -96,8 +108,6 @@ def build(bld):
             target=bld.get_env()["libname"],
             includes=includes_path,
             uselib=bld.get_env()["libs"],
-            defines=bld.get_env()["DEFINES"],
-            cxxflags=bld.get_env()["CXXFLAGS"],
         )
     else:
         bld.stlib(
@@ -106,8 +116,6 @@ def build(bld):
             target=bld.get_env()["libname"],
             includes=includes_path,
             uselib=bld.get_env()["libs"],
-            defines=bld.get_env()["DEFINES"],
-            cxxflags=bld.get_env()["CXXFLAGS"],
         )
 
     # Build executables
