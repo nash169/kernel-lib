@@ -40,7 +40,6 @@ def build(bld):
                     uselib=bld.env["libs"],
                     use=bld.env["libname"],
                     defines=optional_defines,
-                    cxxflags=bld.get_env()["CXXFLAGS"],
                     target=test[: len(test) - len(".cpp")],
                 )
         else:
@@ -52,6 +51,5 @@ def build(bld):
                 uselib=bld.env["libs"],
                 use=bld.env["libname"],
                 defines=optional_defines,
-                cxxflags=bld.get_env()["CXXFLAGS"],
                 target=test[: len(test) - len(".cpp")],
             )
