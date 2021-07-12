@@ -3,6 +3,7 @@
 
 #include "kernel_lib/tools/macros.hpp"
 #include "kernel_lib/tools/math.hpp"
+#include "kernel_lib/utils/Expansion.hpp"
 
 namespace kernel_lib {
 
@@ -22,30 +23,35 @@ namespace kernel_lib {
         public:
             AbstractKernel() : _sf2(std::exp(2 * Params::kernel::sf())), _sn2(std::exp(2 * Params::kernel::sn())) {}
 
-            /* Evaluate kernel */
-            template <typename Derived>
-            inline __attribute__((always_inline)) double operator()(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
+            /* Kernel */
+            // Following what said below for kernelImpl we use MatrixBase type to automatically derived the size to of the vector
+            // https://stackoverflow.com/questions/25094948/eigen-how-to-access-the-underlying-array-of-a-matrixbasederived
+            // For the usage of MatrixBase: https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html
+            template <typename Derived, typename OtherDerived>
+            EIGEN_ALWAYS_INLINE double operator()(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<OtherDerived>& y) const
             {
-                return _sf2 * static_cast<const Kernel*>(this)->kernel(x, y) + ((&x == &y) ? _sn2 + 1e-8 : 0);
+                return kernelImpl < (Derived::RowsAtCompileTime == 1) ? Derived::ColsAtCompileTime : Derived::RowsAtCompileTime > (x.derived(), y.derived());
             }
 
-            template <typename Derived>
-            inline __attribute__((always_inline)) auto grad(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
+            /* Gradient */
+            template <typename Derived, typename OtherDerived>
+            EIGEN_ALWAYS_INLINE auto grad(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<OtherDerived>& y, const size_t& i = 1) const
             {
-                return _sf2 * static_cast<const Kernel*>(this)->gradient(x, y);
+                return gradImpl < (Derived::RowsAtCompileTime == 1) ? Derived::ColsAtCompileTime : Derived::RowsAtCompileTime > (x.derived(), y.derived(), i);
             }
 
-            template <typename Derived>
-            inline __attribute__((always_inline)) auto gradParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
+            /* Parameters' gradient */
+            template <typename Derived, typename OtherDerived>
+            EIGEN_ALWAYS_INLINE auto gradParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<OtherDerived>& y) const
             {
-                Eigen::VectorXd p(sizeParams());
-                p << 2 * _sf2 * static_cast<const Kernel*>(this)->kernel(x, y), (&x == &y) ? 2 * _sf2 : 0, _sn2 * static_cast<const Kernel*>(this)->gradientParams(x, y);
-
-                return p;
+                return gradParamsImpl < (Derived::RowsAtCompileTime == 1) ? Derived::ColsAtCompileTime : Derived::RowsAtCompileTime > (x.derived(), y.derived());
             }
 
+            /* Gram matrix */
+            // Flattening not really necessary here
+            // https://awesomekling.github.io/Smarter-C++-inlining-with-attribute-flatten/
             template <int Size>
-            Eigen::MatrixXd gramian(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x, const Eigen::Matrix<double, Eigen::Dynamic, Size>& y) const
+            EIGEN_DEVICE_FUNC Eigen::MatrixXd gram(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x, const Eigen::Matrix<double, Eigen::Dynamic, Size>& y) const
             {
                 size_t x_samples = x.rows(), y_samples = y.rows();
 
@@ -54,13 +60,14 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        k(i, j) = (*this)(x.row(i), y.row(j));
+                        k(i, j) = kernelImpl<Size>(x.row(i), y.row(j));
 
                 return k;
             }
 
+            /* Gram matrix gradient */
             template <int Size>
-            Eigen::Matrix<double, Eigen::Dynamic, Size> multiGrad(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x, const Eigen::Matrix<double, Eigen::Dynamic, Size>& y) const
+            Eigen::Matrix<double, Eigen::Dynamic, Size> gramGrad(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x, const Eigen::Matrix<double, Eigen::Dynamic, Size>& y, const size_t& k = 1) const
             {
                 size_t x_samples = x.rows(), y_samples = y.rows();
 
@@ -69,13 +76,14 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        g.row(j * x_samples + i) = grad(x.row(i), y.row(j));
+                        g.row(j * x_samples + i) = gradImpl<Size>(x.row(i), y.row(j), k);
 
                 return g;
             }
 
+            /* Gram matrix gradient with respect to parameters */
             template <int Size>
-            Eigen::MatrixXd multiGradParams(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x, const Eigen::Matrix<double, Eigen::Dynamic, Size>& y) const
+            Eigen::MatrixXd gramGradParams(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x, const Eigen::Matrix<double, Eigen::Dynamic, Size>& y) const
             {
                 size_t x_samples = x.rows(), y_samples = y.rows();
 
@@ -84,7 +92,7 @@ namespace kernel_lib {
 #pragma omp parallel for collapse(2)
                 for (size_t j = 0; j < y_samples; j++)
                     for (size_t i = 0; i < x_samples; i++)
-                        p.row(j * x_samples + i) = gradParams(x.row(i), y.row(j));
+                        p.row(j * x_samples + i) = gradParamsImpl<Size>(x.row(i), y.row(j));
 
                 return p;
             }
@@ -110,6 +118,8 @@ namespace kernel_lib {
             /* Parameters' size */
             size_t sizeParams() const { return this->sizeParameters() + 2; }
 
+            friend class utils::Expansion<Params, Kernel>;
+
         protected:
             double _sf2, _sn2;
 
@@ -121,9 +131,49 @@ namespace kernel_lib {
 
             /* Get number of parameters for the specific kernel */
             virtual size_t sizeParameters() const = 0;
+
+            /* Kernel Implementation */
+            // Automatic template deduction fails if this is exposed to the user
+            // https://stackoverflow.com/questions/48511569/template-argument-deduction-for-eigenrefmatt
+            // For the usage of Eigen::Ref: https://eigen.tuxfamily.org/dox/classEigen_1_1Ref.html
+            // For the usage of Eigen::Map: https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html#TutorialMapTypes
+            // Setting the stride: https://eigen.tuxfamily.org/dox/classEigen_1_1Stride.html
+            //                     https://eigen.tuxfamily.org/dox/group__TopicStorageOrders.html
+            template <int Size>
+            EIGEN_ALWAYS_INLINE double kernelImpl(const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& x, const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& y) const
+            {
+                return _sf2 * static_cast<const Kernel*>(this)->kernel(x, y) + (x.data() == y.data() ? _sn2 + 1e-8 : 0);
+            }
+
+            /* Gradient Implementation */
+            template <int Size>
+            EIGEN_ALWAYS_INLINE auto gradImpl(const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& x, const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& y, const size_t& i = 1) const
+            {
+                return _sf2 * static_cast<const Kernel*>(this)->gradient(x, y, i);
+            }
+
+            /* Gradient parameters implementation */
+            template <int Size>
+            EIGEN_ALWAYS_INLINE auto gradParamsImpl(const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& x, const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& y) const
+            {
+                Eigen::VectorXd p(sizeParams());
+
+                p << 2 * _sf2 * static_cast<const Kernel*>(this)->kernel(x, y),
+                    (x.data() == y.data()) ? 2 * _sn2 : 0,
+                    _sf2 * static_cast<const Kernel*>(this)->gradientParams(x, y);
+
+                return p;
+            }
         };
 
     } // namespace kernels
 } // namespace kernel_lib
 
 #endif // KERNELLIB_KERNELS_ABSTRACTKERNEL_HPP
+
+/* Alternative operator implementation that forces specific shape of the data */
+// template <int Size>
+// EIGEN_ALWAYS_INLINE double operator()(const Eigen::Matrix<double, Size, 1>& x, const Eigen::Matrix<double, Size, 1>& y) const
+// {
+//     return kernelImpl<Size>(x, y);
+// }
