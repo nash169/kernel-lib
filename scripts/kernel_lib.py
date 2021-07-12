@@ -24,7 +24,7 @@ def check_kernel(ctx):
         path_check = [ctx.options.kernel_path]
 
     # kernel-lib includes
-    check_include(ctx, "KERNEL", ["kernel_lib"], ["Kernel.hpp"], path_check)
+    check_include(ctx, "KERNEL", [""], ["kernel_lib/Kernel.hpp"], path_check)
 
     # kernel-lib libs
     check_lib(ctx, "KERNEL", "", ["libKernel"], path_check)
