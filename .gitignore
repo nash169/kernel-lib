@@ -405,3 +405,5 @@ TSWLatexianTemp*
 *.sta
 
 .lock-waf_darwin_build
+
+.DS_Store
