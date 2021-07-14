@@ -3,6 +3,7 @@
 
 #include <Eigen/Core>
 #include <unordered_map>
+#include <vector>
 
 namespace kernel_lib {
     namespace utils {

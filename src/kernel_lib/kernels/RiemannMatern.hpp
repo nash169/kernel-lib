@@ -70,7 +70,7 @@ namespace kernel_lib {
             }
 
             /* Set specific kernel parameters */
-            void setParameters(const Eigen::VectorXd& params)
+            void setParameters(const Eigen::VectorXd& params) override
             {
                 _l = std::exp(params(0));
 
@@ -84,7 +84,7 @@ namespace kernel_lib {
             }
 
             /* Get number of parameters for the specific kernel */
-            size_t sizeParameters() const { return 1; }
+            size_t sizeParameters() const override { return 1; }
         };
 
     } // namespace kernels

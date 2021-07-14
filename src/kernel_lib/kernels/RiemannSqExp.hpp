@@ -3,6 +3,8 @@
 
 #define VECTORIZED_EXPANSION
 
+#include <unordered_map>
+
 #include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/macros.hpp"
 #include "kernel_lib/tools/math.hpp"
@@ -145,13 +147,13 @@ namespace kernel_lib {
             }
 
             /* Set specific kernel parameters */
-            void setParameters(const Eigen::VectorXd& params)
+            void setParameters(const Eigen::VectorXd& params) override
             {
                 _l = std::exp(params(0));
             }
 
             /* Get number of parameters for the specific kernel */
-            size_t sizeParameters() const { return 1; }
+            size_t sizeParameters() const override { return 1; }
         };
 
     } // namespace kernels
