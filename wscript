@@ -12,7 +12,7 @@ srcdir = "."
 blddir = "build"
 
 # Tools' name and directory
-tools = {"utils_cpp": "/home/bernardo/devs/utils-cpp/install"}
+tools = {"utils_cpp": " "}
 
 
 def options(opt):
@@ -49,8 +49,7 @@ def configure(cfg):
     cfg.env.SUFFIX = "dylib" if cfg.env["DEST_OS"] == "darwin" else "so"
 
     # Load compiler configuration and generate clangd flags
-    cfg.load("compiler_cxx")
-    cfg.load("clang_compilation_database")
+    cfg.load("compiler_cxx clang_compilation_database")
 
     # Define require libraries
     cfg.get_env()["requires"] += ["EIGEN", "CORRADE"]
