@@ -116,6 +116,11 @@ waf (./waf) configure --release --multi-threading --eigen-openmp --eigen-mkl --m
 ```sh
 ./build/src/examples/create_kernels
 ```
+The example depends on *utils-cpp* library. In order to find the related waf tool define the installation directory by adding the following line at the beginning of the main `wscript`
+```sh
+tools = {"tool": "/path/to/install/dir"}
+```
+It is assumed the tool has been installed in `/path/to/install/dir/"share/waf`.
 
 ### Benchmarks
 ```sh
