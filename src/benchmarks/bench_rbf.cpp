@@ -13,12 +13,12 @@ using namespace kernel_lib;
 
 struct Params {
     struct kernel : public defaults::kernel {
-        PARAM_SCALAR(double, sf, std::log(0.5));
-        PARAM_SCALAR(double, sn, std::log(1.4));
+        PARAM_SCALAR(double, sf, 0.405465);
+        PARAM_SCALAR(double, sn, 0.693147);
     };
 
     struct exp_sq : public defaults::exp_sq {
-        PARAM_SCALAR(double, l, std::log(3.1));
+        PARAM_SCALAR(double, l, -0.356675);
     };
 
     struct riemann_exp_sq : public defaults::riemann_exp_sq {
