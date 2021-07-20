@@ -1,13 +1,19 @@
 #ifndef KERNELLIB_KERNEL_HPP
 #define KERNELLIB_KERNEL_HPP
 
-/* Kernels */
+/* Squared Exponential Kernel */
 #include "kernel_lib/kernels/SquaredExp.hpp"
+
+/* Riemannian Squared Exponential Kernel */
 #include <kernel_lib/kernels/RiemannSqExp.hpp>
 
-/* Utils */
-#include "kernel_lib/utils/EigenFunction.hpp"
+/* Riemannian Matern Kernel */
+// #include <kernel_lib/kernels/RiemannMatern.hpp>
+
+/* Kernel expansion */
 #include "kernel_lib/utils/Expansion.hpp"
+
+/* Build Graph */
 #include "kernel_lib/utils/Graph.hpp"
 
 /* Tools */
@@ -21,6 +27,10 @@ namespace kernel_lib {
         };
         struct exp_sq : public defaults::exp_sq {
         };
+        struct riemann_exp_sq : public defaults::riemann_exp_sq {
+        };
+        // struct riemann_matern : public defaults::riemann_matern {
+        // };
         struct expansion : public defaults::expansion {
         };
     };
