@@ -1,7 +1,7 @@
 #ifndef KERNELLIB_EXPANSION_UTILS_HPP
 #define KERNELLIB_EXPANSION_UTILS_HPP
 
-#include "type_name_rt.hpp"
+#include "kernel_lib/tools/type_name_rt.hpp"
 
 namespace kernel_lib {
     namespace defaults {
@@ -86,7 +86,7 @@ namespace kernel_lib {
                 return *this;
             }
 
-            Expansion& setParams(const Eigen::VectorXd& params)
+            virtual Expansion& setParams(const Eigen::VectorXd& params)
             {
                 _params = params;
 
