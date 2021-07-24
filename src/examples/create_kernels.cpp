@@ -1,34 +1,47 @@
 #include <iostream>
 
-#include <kernel_lib/kernels/SquaredExp.hpp>
+#include <kernel_lib/Kernel.hpp>
 
 #include <utils_cpp/UtilsCpp.hpp>
 
 using namespace kernel_lib;
-
-// Kernel parameters
-struct Params {
-    struct kernel : public defaults::kernel {
-        PARAM_SCALAR(double, sf, 0.405465);
-        PARAM_SCALAR(double, sn, 0.693147);
-    };
-
-    struct exp_sq : public defaults::exp_sq {
-        PARAM_SCALAR(double, l, -0.356675);
-    };
-};
 
 int main(int argc, char const* argv[])
 {
     double box[] = {0, 100, 0, 100};
     size_t resolution = 100, num_samples = resolution * resolution, dim = sizeof(box) / sizeof(*box) / 2;
 
-    Eigen::MatrixXd X(resolution, resolution), Y(resolution, resolution), x_test(num_samples, dim), x_train(1, dim);
-
-    // Test set
-    X = Eigen::RowVectorXd::LinSpaced(resolution, box[0], box[1]).replicate(resolution, 1);
-    Y = Eigen::VectorXd::LinSpaced(resolution, box[2], box[3]).replicate(1, resolution);
+    // Data
+    Eigen::MatrixXd X = Eigen::RowVectorXd::LinSpaced(resolution, box[0], box[1]).replicate(resolution, 1),
+                    Y = Eigen::VectorXd::LinSpaced(resolution, box[2], box[3]).replicate(1, resolution),
+                    x_test(num_samples, dim), x_train(1, dim);
     x_test << Eigen::Map<Eigen::VectorXd>(X.data(), X.size()), Eigen::Map<Eigen::VectorXd>(Y.data(), Y.size());
+    x_train << 50, 50;
+    // Eigen::Vector2d x_train = (Eigen::Vector2d() << 50, 50).finished();
+    Eigen::VectorXd a = Eigen::VectorXd::Random(2), b = Eigen::VectorXd::Random(2);
+
+    // Kernel
+    using Kernel_t = kernels::SquaredExpFull<ParamsDefaults>;
+    Kernel_t k;
+
+    std::cout << k(a, b) << std::endl;
+    std::cout << k.grad(a, b).transpose() << std::endl;
+    std::cout << k.gradParams(a, b).transpose() << std::endl;
+
+    // Gaussian
+    using Gaussian_t = utils::Gaussian<ParamsDefaults, Kernel_t>;
+    Gaussian_t gauss;
+
+    // // Expansion
+    // using Expansion_t = utils::Expansion<ParamsDefaults, Kernel_t>;
+    // Expansion_t psi;
+    // psi.setReference(x_train);
+    // psi.setParams(tools::makeVector(1));
+
+    // // Solution
+    // utils_cpp::FileManager io_manager;
+    // io_manager.setFile("rsc/kernel_eval.csv");
+    // io_manager.write("X", X, "Y", Y, "F", psi.multiEval(x_test));
 
     return 0;
 }
