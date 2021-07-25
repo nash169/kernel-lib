@@ -6,6 +6,8 @@
 #include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/helper.hpp"
 
+#include "kernel_lib/utils/Gaussian.hpp"
+
 namespace kernel_lib {
     namespace defaults {
         struct exp_sq_full {
@@ -51,8 +53,11 @@ namespace kernel_lib {
                 return Eigen::Map<Eigen::VectorXd>(s.data(), s.size());
             }
 
+            friend class utils::Gaussian<Params, SquaredExpFull<Params>>;
+
         protected:
             // Full matrix (probably the same information of llt)
+            // Still not clear what's inside this matrix (probably the result of LL^T)
             Eigen::MatrixXd _S;
 
             // This should not allocate additional memory
@@ -80,6 +85,13 @@ namespace kernel_lib {
 
             /* Get number of parameters for the specific kernel */
             size_t sizeParameters() const override { return _S.size(); }
+
+            /* Kernel logarithm (mainly used by the Gaussian to produce the log-likelihood) */
+            template <typename Derived>
+            EIGEN_ALWAYS_INLINE double log(const Derived& x, const Derived& y) const
+            {
+                return _llt->matrixL().solve(x - y).squaredNorm() * -0.5;
+            }
         };
     } // namespace kernels
 } // namespace kernel_lib
