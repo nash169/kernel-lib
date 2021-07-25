@@ -1,7 +1,5 @@
 #include <iostream>
-#include <kernel_lib/kernels/SquaredExp.hpp>
-
-#define KERNEL kernels::SquaredExp<Params>
+#include <kernel_lib/Kernel.hpp>
 
 using namespace kernel_lib;
 
@@ -13,6 +11,10 @@ struct Params {
 
     struct exp_sq : public defaults::exp_sq {
         PARAM_SCALAR(double, l, 3.1);
+    };
+
+    struct exp_sq_full {
+        PARAM_VECTOR(double, S, 1, 0.5, 0.5, 1);
     };
 };
 
@@ -35,11 +37,14 @@ int main(int argc, char const* argv[])
     b << 0.970592781760616, 0.141886338627215;
 
     // Params
-    Eigen::VectorXd params(3);
-    params << std::log(1.5), std::log(2.0), std::log(0.7);
+    // Eigen::VectorXd params(3);
+    // params << std::log(1.5), std::log(2.0), std::log(0.7);
+
+    Eigen::VectorXd params(6);
+    params << std::log(1.5), std::log(2.0), 1.3, 0.3, 0.3, 1.1;
 
     std::cout << "KERNEL CREATION AND PARAMS SIZE" << std::endl;
-    using Kernel_t = KERNEL;
+    using Kernel_t = kernels::SquaredExpFull<Params>;
     Kernel_t k;
     std::cout << k.sizeParams() << std::endl;
 
@@ -52,7 +57,7 @@ int main(int argc, char const* argv[])
     std::cout << k.params().transpose() << std::endl;
 
     std::cout << "KERNEL SINGLE POINTS xy, Xy, XX" << std::endl;
-    std::cout << k(a, b) << " " << k(x.row(0), b) << " " << k(x.row(0), x.row(0)) << std::endl;
+    std::cout << k(a, b) << " - " << k(x.row(0), b) << " - " << k(x.row(0), x.row(0)) << std::endl;
 
     std::cout << "KERNEL GRAM XY" << std::endl;
     std::cout << k.gram(x, y) << std::endl;
@@ -60,11 +65,17 @@ int main(int argc, char const* argv[])
     std::cout << "KERNEL GRAM XX" << std::endl;
     std::cout << k.gram(x, x) << std::endl;
 
+    std::cout << "GRADIENT SINGLE POINTS xy, Xy, XX" << std::endl;
+    std::cout << k.grad(a, b).transpose() << " - " << k.grad(x.row(0), b).transpose() << " - " << k.grad(x.row(0), x.row(0)).transpose() << std::endl;
+
     std::cout << "GRADIENT XY" << std::endl;
     std::cout << k.gramGrad(x, y) << std::endl;
 
     std::cout << "GRADIENT XX" << std::endl;
     std::cout << k.gramGrad(x, x) << std::endl;
+
+    std::cout << "GRADIENT PARAMS SINGLE POINTS xy, Xy, XX" << std::endl;
+    std::cout << k.gradParams(a, b).transpose() << " - " << k.gradParams(x.row(0), b).transpose() << " - " << k.gradParams(x.row(0), x.row(0)).transpose() << std::endl;
 
     std::cout << "GRADIENT PARAMS XY" << std::endl;
     std::cout << k.gramGradParams(x, y) << std::endl;
