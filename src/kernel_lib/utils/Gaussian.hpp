@@ -3,8 +3,10 @@
 
 #include <math.h>
 
-#include "kernel_lib/kernels/SquaredExp.hpp"
-#include "kernel_lib/utils/Expansion.hpp"
+#include "kernel_lib/tools/helper.hpp"
+#include "kernel_lib/tools/macros.hpp"
+
+// #include "kernel_lib/kernels/SquaredExp.hpp"
 
 namespace kernel_lib {
     namespace defaults {
@@ -12,6 +14,14 @@ namespace kernel_lib {
             PARAM_VECTOR(double, mu, 0, 0);
         };
     } // namespace defaults
+
+    namespace kernels {
+        template <typename Params>
+        class SquaredExp;
+
+        template <typename Params>
+        class SquaredExpFull;
+    } // namespace kernels
 
     namespace utils {
         template <typename Params, typename Kernel = kernels::SquaredExp<Params>>
@@ -23,6 +33,30 @@ namespace kernel_lib {
             EIGEN_ALWAYS_INLINE double operator()(const Eigen::Matrix<double, Size, 1>& x) const
             {
                 return _weight * _kernel.template kernelImpl<Size>(x, _mu);
+            }
+
+            template <int Size>
+            EIGEN_ALWAYS_INLINE double log(const Eigen::Matrix<double, Size, 1>& x) const
+            {
+                if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>) {
+                    return _kernel.log(x, _mu) - 0.5 * x.size() * (_kernel.parameters() + std::log(2 * M_PI));
+                }
+                else if (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>) {
+                    return _kernel.log(x, _mu) - 0.5 * (std::log(_kernel._S.determinant()) + x.size() * std::log(2 * M_PI));
+                }
+                else {
+                    return _kernel.log(x, _mu) + std::log(_weight);
+                }
+            }
+
+            template <int Size>
+            EIGEN_ALWAYS_INLINE auto grad(const Eigen::Matrix<double, Size, 1>& x) const
+            {
+            }
+
+            template <int Size>
+            EIGEN_ALWAYS_INLINE auto gradParams(const Eigen::Matrix<double, Size, 1>& x) const
+            {
             }
 
             template <int Size>
@@ -40,19 +74,31 @@ namespace kernel_lib {
             Gaussian& setParams(const Eigen::VectorXd& params)
             {
                 if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>) {
-                    _kernel.setParameters(params(0));
+                    // Set sigma
+                    _kernel.setParameters(tools::makeVector(params(0)));
+
+                    // Set mean
                     _mu = params.segment(1, params.size() - 1);
-                    _weight = 1 / (params(0) * std::sqrt(2 * M_PI));
+
+                    // Set normalization
+                    _weight = 1 / std::sqrt(std::pow(2 * M_PI * _kernel._l, _mu.size()));
                 }
                 else if (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>) {
-                    _kernel.setParameters(params.segment(0, _kernel.sizeParameters() - 1));
-                    _mu = params.segment(_kernel.sizeParameters(), params.size() - 1);
+                    // Calculate size
+                    int size = 0.5 * (std::sqrt(1 + 4 * params.size()) - 1);
 
-                    double det = Eigen::Map<Eigen::MatrixXd>(params.segment(0, _kernel.sizeParameters() - 1).data(), _mu.size(), _mu.size()).determinant();
-                    _weight = 1 / std::sqrt(std::pow(2 * M_PI, _mu.size()) * det);
+                    // Set covariance
+                    _kernel.setParameters(params.segment(0, size * size));
+
+                    // Set mean
+                    _mu = params.segment(size * size, size);
+
+                    // Set normalization (see SquaredExpFull for the matrix _S)
+                    _weight = 1 / std::sqrt(std::pow(2 * M_PI, size) * _kernel._S.determinant());
+                    // Eigen::MatrixXd det = Eigen::Map<Eigen::MatrixXd>(params.segment(0, _kernel.sizeParameters() - 1).data(), _mu.size(), _mu.size());
                 }
                 else {
-                    _weight = 1;
+                    _weight = params(0);
                 }
 
                 return *this;
