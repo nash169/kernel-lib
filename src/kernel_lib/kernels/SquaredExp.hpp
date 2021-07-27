@@ -61,11 +61,23 @@ namespace kernel_lib {
             /* Get number of parameters for the specific kernel */
             size_t sizeParameters() const override { return 1; }
 
-            /* Kernel logarithm (mainly used by the Gaussian to produce the log-likelihood) */
+            /* Kernel logarithms (mainly used by the Gaussian to produce the log-likelihood) */
             template <typename Derived>
-            EIGEN_ALWAYS_INLINE double log(const Derived& x, const Derived& y) const
+            EIGEN_ALWAYS_INLINE double logKernel(const Derived& x, const Derived& y) const
             {
                 return (x - y).squaredNorm() * -0.5 / std::pow(_l, 2);
+            }
+
+            template <typename Derived>
+            EIGEN_ALWAYS_INLINE auto logGrad(const Derived& x, const Derived& y, const size_t& i = 1) const
+            {
+                return ((i) ? (y - x) : (x - y)) / std::pow(_l, 2);
+            }
+
+            template <typename Derived>
+            EIGEN_ALWAYS_INLINE auto logGradParams(const Derived& x, const Derived& y) const
+            {
+                return (x - y).squaredNorm() / std::pow(_l, 2);
             }
         };
     } // namespace kernels

@@ -88,9 +88,23 @@ namespace kernel_lib {
 
             /* Kernel logarithm (mainly used by the Gaussian to produce the log-likelihood) */
             template <typename Derived>
-            EIGEN_ALWAYS_INLINE double log(const Derived& x, const Derived& y) const
+            EIGEN_ALWAYS_INLINE double logKernel(const Derived& x, const Derived& y) const
             {
                 return _llt->matrixL().solve(x - y).squaredNorm() * -0.5;
+            }
+
+            template <typename Derived>
+            EIGEN_ALWAYS_INLINE auto logGradient(const Derived& x, const Derived& y, const size_t& i = 1) const
+            {
+                return _llt->solve(i ? (y - x) : (x - y));
+            }
+
+            template <typename Derived>
+            EIGEN_ALWAYS_INLINE auto logGradientParams(const Derived& x, const Derived& y) const
+            {
+                Eigen::MatrixXd s = _llt->solve(x - y) * _llt->solve(x - y).transpose();
+
+                return Eigen::Map<Eigen::VectorXd>(s.data(), s.size());
             }
         };
     } // namespace kernels
