@@ -62,20 +62,20 @@ namespace kernel_lib {
             size_t sizeParameters() const override { return 1; }
 
             /* Kernel logarithms (mainly used by the Gaussian to produce the log-likelihood) */
-            template <typename Derived>
-            EIGEN_ALWAYS_INLINE double logKernel(const Derived& x, const Derived& y) const
+            template <int Size>
+            EIGEN_ALWAYS_INLINE double logKernel(const Eigen::Matrix<double, Size, 1>& x, const Eigen::Matrix<double, Size, 1>& y) const
             {
                 return (x - y).squaredNorm() * -0.5 / std::pow(_l, 2);
             }
 
-            template <typename Derived>
-            EIGEN_ALWAYS_INLINE auto logGrad(const Derived& x, const Derived& y, const size_t& i = 1) const
+            template <int Size>
+            EIGEN_ALWAYS_INLINE auto logGradient(const Eigen::Matrix<double, Size, 1>& x, const Eigen::Matrix<double, Size, 1>& y, const size_t& i = 1) const
             {
                 return ((i) ? (y - x) : (x - y)) / std::pow(_l, 2);
             }
 
-            template <typename Derived>
-            EIGEN_ALWAYS_INLINE auto logGradParams(const Derived& x, const Derived& y) const
+            template <int Size>
+            EIGEN_ALWAYS_INLINE auto logGradientParams(const Eigen::Matrix<double, Size, 1>& x, const Eigen::Matrix<double, Size, 1>& y) const
             {
                 return (x - y).squaredNorm() / std::pow(_l, 2);
             }
