@@ -29,52 +29,60 @@ namespace kernel_lib {
         public:
             Gaussian() : _mu(Params::gaussian::mu()), _kernel() {}
 
+            /* Normal distribution evaluation */
             template <int Size>
             EIGEN_ALWAYS_INLINE double operator()(const Eigen::Matrix<double, Size, 1>& x) const
             {
                 return _weight * _kernel.template kernelImpl<Size>(x, _mu);
             }
 
+            /* Normal distribution log */
             template <int Size>
             EIGEN_ALWAYS_INLINE double log(const Eigen::Matrix<double, Size, 1>& x) const
             {
                 if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>) {
-                    return _kernel.logKernel(x, _mu) - 0.5 * x.size() * (_kernel.parameters() + std::log(2 * M_PI));
+                    return _kernel.template logKernel<Size>(x, _mu) - 0.5 * x.size() * (_kernel.parameters()(0) + std::log(2 * M_PI));
                 }
                 else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>) {
-                    return _kernel.logKernel(x, _mu) - 0.5 * (std::log(_kernel._S.determinant()) + x.size() * std::log(2 * M_PI));
+                    return _kernel.template logKernel<Size>(x, _mu) - 0.5 * (std::log(_kernel._S.determinant()) + x.size() * std::log(2 * M_PI));
                 }
                 else {
-                    return _kernel.logKernel(x, _mu) + std::log(_weight);
+                    return _kernel.template logKernel<Size>(x, _mu) + std::log(_weight);
                 }
             }
 
+            /* Gradient with respect to the input */
             template <int Size>
             EIGEN_ALWAYS_INLINE auto grad(const Eigen::Matrix<double, Size, 1>& x) const
             {
-                return _weight * _kernel.gradient(x, _mu, 0);
+                return _weight * _kernel.template gradImpl<Size>(x, _mu, 0);
             }
 
+            /* Gradient with respect to the parameters (this is by default in log space) */
             template <int Size>
             EIGEN_ALWAYS_INLINE auto gradParams(const Eigen::Matrix<double, Size, 1>& x) const
             {
                 if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>) {
                     Eigen::VectorXd grad(1 + _mu.size());
 
-                    grad << -0.5 / std::pow(_kernel._l, 2) * Eigen::MatrixXd::Identity(_mu.size(), _mu.size()) + _kernel.logGradientParams(x, _mu),
-                        _kernel.logGradient(x, _mu, 1);
+                    grad << -0.5 / std::pow(_kernel._l, 2) + _kernel.template logGradientParams<Size>(x, _mu),
+                        _kernel.template logGradient<Size>(x, _mu, 1);
 
                     return grad;
                 }
                 else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>) {
                     Eigen::VectorXd grad(_mu.size() + _mu.size() * _mu.size());
 
-                    grad << -0.5 * _kernel._llt.solve(Eigen::MatrixXd::Identity(_mu.size(), _mu.size())) + _kernel.logGradientParams(x, _mu),
-                        _kernel.logGradient(x, _mu, 1);
+                    Eigen::MatrixXd Sinv = _kernel._llt->solve(Eigen::MatrixXd::Identity(_mu.size(), _mu.size()));
+
+                    grad << -0.5 * Eigen::Map<Eigen::VectorXd>(Sinv.data(), _mu.size() * _mu.size()) + _kernel.template logGradientParams<Size>(x, _mu),
+                        _kernel.template logGradient<Size>(x, _mu, 1);
 
                     return grad;
                 }
                 else {
+                    Eigen::VectorXd grad;
+                    return grad;
                 }
             }
 
@@ -90,6 +98,7 @@ namespace kernel_lib {
                 return r;
             }
 
+            /* Get params (for unknown kernel gives back just the weight - maybe add kernel's params) */
             auto params()
             {
                 if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>) {
@@ -110,10 +119,11 @@ namespace kernel_lib {
                 }
             }
 
+            /* Set parameters */
             Gaussian& setParams(const Eigen::VectorXd& params)
             {
                 if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>) {
-                    // Set sigma
+                    // Set sigma (this is still in log space - maybe change this)
                     _kernel.setParameters(tools::makeVector(params(0)));
 
                     // Set mean
@@ -141,6 +151,16 @@ namespace kernel_lib {
                 }
 
                 return *this;
+            }
+
+            size_t sizeParams()
+            {
+                if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>)
+                    return _mu.size() + 1;
+                else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>)
+                    return _mu.size() + _mu.size() * _mu.size();
+                else
+                    return 1;
             }
 
         protected:
