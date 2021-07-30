@@ -11,7 +11,6 @@
 namespace kernel_lib {
     namespace defaults {
         struct exp_sq_full {
-            // Log length
             PARAM_VECTOR(double, S, 1, 0.5, 0.5, 1);
         };
     } // namespace defaults
@@ -48,7 +47,7 @@ namespace kernel_lib {
             template <typename Derived>
             EIGEN_ALWAYS_INLINE auto gradientParams(const Derived& x, const Derived& y) const
             {
-                Eigen::MatrixXd s = (_llt->solve(x - y) * _llt->solve(x - y).transpose()) * kernel(x, y);
+                Eigen::MatrixXd s = 0.5 * (_llt->solve(x - y) * _llt->solve(x - y).transpose()) * kernel(x, y);
 
                 return Eigen::Map<Eigen::VectorXd>(s.data(), s.size());
             }
@@ -102,7 +101,7 @@ namespace kernel_lib {
             template <int Size>
             EIGEN_ALWAYS_INLINE auto logGradientParams(const Eigen::Matrix<double, Size, 1>& x, const Eigen::Matrix<double, Size, 1>& y) const
             {
-                Eigen::MatrixXd s = _llt->solve(x - y) * _llt->solve(x - y).transpose();
+                Eigen::MatrixXd s = 0.5 * (_llt->solve(x - y) * _llt->solve(x - y).transpose());
 
                 return Eigen::Map<Eigen::VectorXd>(s.data(), s.size());
             }
