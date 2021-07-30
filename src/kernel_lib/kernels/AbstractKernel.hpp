@@ -10,10 +10,10 @@ namespace kernel_lib {
     namespace defaults {
         struct kernel {
             // Log signal std
-            PARAM_SCALAR(double, sf, 1.0);
+            PARAM_SCALAR(double, sf, 0.0);
 
             // Log noise std
-            PARAM_SCALAR(double, sn, 0.0);
+            PARAM_SCALAR(double, sn, -1e2);
         };
     } // namespace defaults
 
