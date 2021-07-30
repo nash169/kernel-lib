@@ -27,7 +27,15 @@ namespace kernel_lib {
         template <typename Params, typename Kernel = kernels::SquaredExp<Params>>
         class Gaussian {
         public:
-            Gaussian() : _mu(Params::gaussian::mu()), _kernel() {}
+            Gaussian() : _mu(Params::gaussian::mu()), _kernel()
+            {
+                if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>)
+                    _weight = 1 / std::sqrt(std::pow(2 * M_PI * _kernel._l, _mu.size()));
+                else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>)
+                    _weight = 1 / std::sqrt(std::pow(2 * M_PI, _mu.size()) * _kernel._S.determinant());
+                else
+                    _weight = 1;
+            }
 
             /* Normal distribution evaluation */
             template <int Size>
@@ -41,7 +49,7 @@ namespace kernel_lib {
             EIGEN_ALWAYS_INLINE double log(const Eigen::Matrix<double, Size, 1>& x) const
             {
                 if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>) {
-                    return _kernel.template logKernel<Size>(x, _mu) - 0.5 * x.size() * (_kernel.parameters()(0) + std::log(2 * M_PI));
+                    return _kernel.template logKernel<Size>(x, _mu) - 0.5 * (std::log(std::pow(_kernel._l, 2)) + x.size() * std::log(2 * M_PI));
                 }
                 else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>) {
                     return _kernel.template logKernel<Size>(x, _mu) - 0.5 * (std::log(_kernel._S.determinant()) + x.size() * std::log(2 * M_PI));
@@ -55,7 +63,7 @@ namespace kernel_lib {
             template <int Size>
             EIGEN_ALWAYS_INLINE auto grad(const Eigen::Matrix<double, Size, 1>& x) const
             {
-                return _weight * _kernel.template gradImpl<Size>(x, _mu, 0);
+                return _weight * _kernel.template gradImpl<Size>(x, _mu, 1);
             }
 
             /* Gradient with respect to the parameters (this is by default in log space) */
@@ -65,8 +73,8 @@ namespace kernel_lib {
                 if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>) {
                     Eigen::VectorXd grad(1 + _mu.size());
 
-                    grad << -0.5 / std::pow(_kernel._l, 2) + _kernel.template logGradientParams<Size>(x, _mu),
-                        _kernel.template logGradient<Size>(x, _mu, 1);
+                    grad << _kernel.template logGradientParams<Size>(x, _mu) - 1,
+                        _kernel.template logGradient<Size>(x, _mu, 0);
 
                     return grad;
                 }
@@ -75,8 +83,16 @@ namespace kernel_lib {
 
                     Eigen::MatrixXd Sinv = _kernel._llt->solve(Eigen::MatrixXd::Identity(_mu.size(), _mu.size()));
 
-                    grad << -0.5 * Eigen::Map<Eigen::VectorXd>(Sinv.data(), _mu.size() * _mu.size()) + _kernel.template logGradientParams<Size>(x, _mu),
-                        _kernel.template logGradient<Size>(x, _mu, 1);
+                    // Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(_kernel.template logGradientParams<Size>(x, _mu).data(), _mu.size(), _mu.size()) - 0.5 * Sinv;
+                    // Eigen::MatrixXd B = 2 * A;
+                    // for (size_t i = 0; i < _mu.size(); i++)
+                    //     B(i, i) -= A(i, i);
+
+                    grad << _kernel.template logGradientParams<Size>(x, _mu) - 0.5 * Eigen::Map<Eigen::VectorXd>(Sinv.data(), _mu.size() * _mu.size()),
+                        _kernel.template logGradient<Size>(x, _mu, 0);
+
+                    // grad << Eigen::Map<Eigen::VectorXd>(B.data(), _mu.size() * _mu.size()),
+                    //     _kernel.template logGradient<Size>(x, _mu, 0);
 
                     return grad;
                 }
