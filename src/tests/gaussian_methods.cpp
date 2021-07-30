@@ -5,8 +5,6 @@ using namespace kernel_lib;
 
 struct Params {
     struct kernel : public defaults::kernel {
-        PARAM_SCALAR(double, sf, 0.5);
-        PARAM_SCALAR(double, sn, 1.4);
     };
 
     struct exp_sq : public defaults::exp_sq {
@@ -26,6 +24,7 @@ int main(int argc, char const* argv[])
 {
     // Data
     Eigen::Vector2d x(0.097540404999410, 0.957506835434298);
+
     // Eigen::Vector3d params(-0.356675, 2.0, 0.7);
     Eigen::Matrix<double, 6, 1> params(1.3, 0.3, 0.3, 1.1, 43.2, 12.6);
 
@@ -48,7 +47,7 @@ int main(int argc, char const* argv[])
     std::cout << gauss(x) << std::endl;
 
     std::cout << "Gaussian -> log()" << std::endl;
-    std::cout << gauss.log(x) << std::endl;
+    std::cout << gauss.log(x) << " - " << std::log(gauss(x)) << std::endl;
 
     std::cout << "Gaussian -> grad()" << std::endl;
     std::cout << gauss.grad(x).transpose() << std::endl;
