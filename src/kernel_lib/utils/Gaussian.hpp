@@ -52,7 +52,7 @@ namespace kernel_lib {
                     return _kernel.template logKernel<Size>(x, _mu) - 0.5 * (std::log(std::pow(_kernel._l, 2)) + x.size() * std::log(2 * M_PI));
                 }
                 else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>) {
-                    return _kernel.template logKernel<Size>(x, _mu) - 0.5 * (std::log(_kernel._S.determinant()) + x.size() * std::log(2 * M_PI));
+                    return _kernel.template logKernel<Size>(x, _mu) - 0.5 * (std::log(std::pow(_kernel._llt->matrixL().determinant(), 2)) + x.size() * std::log(2 * M_PI));
                 }
                 else {
                     return _kernel.template logKernel<Size>(x, _mu) + std::log(_weight);
@@ -83,16 +83,8 @@ namespace kernel_lib {
 
                     Eigen::MatrixXd Sinv = _kernel._llt->solve(Eigen::MatrixXd::Identity(_mu.size(), _mu.size()));
 
-                    // Eigen::MatrixXd A = Eigen::Map<Eigen::MatrixXd>(_kernel.template logGradientParams<Size>(x, _mu).data(), _mu.size(), _mu.size()) - 0.5 * Sinv;
-                    // Eigen::MatrixXd B = 2 * A;
-                    // for (size_t i = 0; i < _mu.size(); i++)
-                    //     B(i, i) -= A(i, i);
-
                     grad << _kernel.template logGradientParams<Size>(x, _mu) - 0.5 * Eigen::Map<Eigen::VectorXd>(Sinv.data(), _mu.size() * _mu.size()),
                         _kernel.template logGradient<Size>(x, _mu, 0);
-
-                    // grad << Eigen::Map<Eigen::VectorXd>(B.data(), _mu.size() * _mu.size()),
-                    //     _kernel.template logGradient<Size>(x, _mu, 0);
 
                     return grad;
                 }
