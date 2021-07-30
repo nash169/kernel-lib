@@ -2,15 +2,13 @@
 #include <kernel_lib/Kernel.hpp>
 #include <utils_cpp/UtilsCpp.hpp>
 
-#define KERNEL kernels::SquaredExp<Params>
+#define KERNEL kernels::SquaredExpFull<Params>
 #define GAUSS utils::Gaussian<Params, KERNEL>
 
 using namespace kernel_lib;
 
 struct Params {
     struct kernel : public defaults::kernel {
-        PARAM_SCALAR(double, sf, 0.405465);
-        PARAM_SCALAR(double, sn, 0.693147);
     };
 
     struct exp_sq : public defaults::exp_sq {
@@ -22,7 +20,7 @@ struct Params {
     };
 
     struct gaussian {
-        PARAM_VECTOR(double, mu, 3.4, 10.1);
+        PARAM_VECTOR(double, mu, 0.4, 0.7);
     };
 };
 
@@ -38,7 +36,7 @@ struct FunctionX : public GAUSS {
 /* GAUSSIAN: Gradient in X */
 template <int size>
 struct GradientX : public GAUSS {
-    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x) const
+    auto operator()(const Eigen::Matrix<double, size, 1>& x) const
     {
         return GAUSS::grad(x);
     }
@@ -78,6 +76,19 @@ int main(int argc, char const* argv[])
     Eigen::VectorXd x = Eigen::VectorXd::Random(dim),
                     params = Eigen::VectorXd::Random(gauss.sizeParams());
 
+    Eigen::MatrixXd A = Eigen::MatrixXd::Random(dim, dim), B = Eigen::MatrixXd::Random(dim, dim);
+    A = 0.5 * (A + A.transpose()) + dim * Eigen::MatrixXd::Identity(dim, dim);
+    B = 0.5 * (A + A.transpose()) + dim * Eigen::MatrixXd::Identity(dim, dim);
+    params.segment(0, dim * dim) = Eigen::Map<Eigen::VectorXd>(A.data(), A.size());
+    Eigen::VectorXd v = Eigen::VectorXd::Random(gauss.sizeParams());
+    v.segment(0, dim * dim) = Eigen::Map<Eigen::VectorXd>(B.data(), B.size());
+
+    std::cout << gauss.grad(x) << std::endl;
+    gauss.setParams(params);
+    Eigen::VectorXd z = Eigen::VectorXd::Zero(dim);
+    std::cout << gauss.log(z) << " - " << std::log(gauss(z)) << std::endl;
+    std::cout << gauss.gradParams(z).transpose() << std::endl;
+
     std::cout << "GAUSSIAN: Function in X test" << std::endl;
     std::cout << FunctionX<dim>()(x) << std::endl;
 
@@ -97,7 +108,7 @@ int main(int argc, char const* argv[])
     else
         std::cout << "GAUSSIAN: The X gradient is NOT correct!" << std::endl;
 
-    if (checker.setDimension(gauss.sizeParams()).checkGradient(FunctionLogParams<dim>(), GradientLogParams<dim>()))
+    if (checker.setDimension(gauss.sizeParams()).checkGradient(FunctionLogParams<dim>(), GradientLogParams<dim>(), params, v))
         std::cout << "GAUSSIAN: PARAMS gradient is CORRECT!" << std::endl;
     else
         std::cout << "GAUSSIAN: PARAMS gradient is NOT correct!" << std::endl;

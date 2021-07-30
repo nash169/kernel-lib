@@ -2,7 +2,7 @@
 #include <kernel_lib/Kernel.hpp>
 #include <utils_cpp/UtilsCpp.hpp>
 
-#define KERNEL kernels::SquaredExp<Params>
+#define KERNEL kernels::SquaredExpFull<Params>
 
 using namespace kernel_lib;
 
@@ -14,6 +14,10 @@ struct Params {
 
     struct exp_sq : public defaults::exp_sq {
         PARAM_SCALAR(double, l, -0.356675);
+    };
+
+    struct exp_sq_full {
+        PARAM_VECTOR(double, S, 1, 0.5, 0.5, 1);
     };
 };
 
@@ -113,7 +117,10 @@ struct GradientParamsS : public KERNEL {
     {
         KERNEL::setParameters(params);
 
-        return tools::makeVector(KERNEL::gradientParams(x, y));
+        if constexpr (std::is_same_v<decltype(KERNEL::gradientParams(x, y)), double>)
+            return tools::makeVector(KERNEL::gradientParams(x, y));
+        else
+            return KERNEL::gradientParams(x, y);
     }
 };
 
@@ -125,7 +132,18 @@ int main(int argc, char const* argv[])
     constexpr int dim = 2;
 
     Eigen::VectorXd x = Eigen::VectorXd::Random(dim),
-                    params_t = Eigen::VectorXd::Random(k.sizeParams()), params_s = Eigen::VectorXd::Random(k.sizeParams() - 2);
+                    params_t = Eigen::VectorXd::Random(k.sizeParams()),
+                    params_s = Eigen::VectorXd::Random(k.sizeParams() - 2);
+
+    // Generate symmetric matrices for the full squared exponential kernel
+    Eigen::MatrixXd A = Eigen::MatrixXd::Random(dim, dim), B = Eigen::MatrixXd::Random(dim, dim);
+    A = 0.5 * (A + A.transpose()) + dim * Eigen::MatrixXd::Identity(dim, dim);
+    B = 0.5 * (A + A.transpose()) + dim * Eigen::MatrixXd::Identity(dim, dim);
+    params_s = Eigen::Map<Eigen::VectorXd>(A.data(), A.size());
+    params_t.segment(dim, dim * dim) = Eigen::Map<Eigen::VectorXd>(A.data(), A.size());
+    Eigen::VectorXd v_t = Eigen::VectorXd::Random(k.sizeParams()), v_s = Eigen::VectorXd::Random(k.sizeParams() - 2);
+    v_s = Eigen::Map<Eigen::VectorXd>(B.data(), B.size());
+    v_t.segment(dim, dim * dim) = Eigen::Map<Eigen::VectorXd>(B.data(), B.size());
 
     std::cout << "TOTAL KERNEL: Function in X test" << std::endl;
     std::cout << FunctionX<dim>()(x) << std::endl;
@@ -163,12 +181,22 @@ int main(int argc, char const* argv[])
     else
         std::cout << "The Y gradient is NOT correct!" << std::endl;
 
-    if (checker.setDimension(k.sizeParams()).checkGradient(FunctionParamsT<dim>(), GradientParamsT<dim>()))
+    // if (checker.setDimension(k.sizeParams()).checkGradient(FunctionParamsT<dim>(), GradientParamsT<dim>()))
+    //     std::cout << "TOTAL KERNEL: PARAMS gradient is CORRECT!" << std::endl;
+    // else
+    //     std::cout << "TOTAL KERNEL: PARAMS gradient is NOT correct!" << std::endl;
+
+    // if (checker.setDimension(k.sizeParams() - 2).checkGradient(FunctionParamsS<dim>(), GradientParamsS<dim>())
+    //     std::cout << "SPECIFIC KERNEL: PARAMS gradient is CORRECT!" << std::endl;
+    // else
+    //     std::cout << "SPECIFIC KERNEL: PARAMS gradient is NOT correct!" << std::endl;
+
+    if (checker.setDimension(k.sizeParams()).checkGradient(FunctionParamsT<dim>(), GradientParamsT<dim>(), params_t, v_t))
         std::cout << "TOTAL KERNEL: PARAMS gradient is CORRECT!" << std::endl;
     else
         std::cout << "TOTAL KERNEL: PARAMS gradient is NOT correct!" << std::endl;
 
-    if (checker.setDimension(k.sizeParams() - 2).checkGradient(FunctionParamsS<dim>(), GradientParamsS<dim>()))
+    if (checker.setDimension(k.sizeParams() - 2).checkGradient(FunctionParamsS<dim>(), GradientParamsS<dim>(), params_s, v_s))
         std::cout << "SPECIFIC KERNEL: PARAMS gradient is CORRECT!" << std::endl;
     else
         std::cout << "SPECIFIC KERNEL: PARAMS gradient is NOT correct!" << std::endl;
