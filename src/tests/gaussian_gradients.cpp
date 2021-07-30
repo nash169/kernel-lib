@@ -76,19 +76,6 @@ int main(int argc, char const* argv[])
     Eigen::VectorXd x = Eigen::VectorXd::Random(dim),
                     params = Eigen::VectorXd::Random(gauss.sizeParams());
 
-    Eigen::MatrixXd A = Eigen::MatrixXd::Random(dim, dim), B = Eigen::MatrixXd::Random(dim, dim);
-    A = 0.5 * (A + A.transpose()) + dim * Eigen::MatrixXd::Identity(dim, dim);
-    B = 0.5 * (A + A.transpose()) + dim * Eigen::MatrixXd::Identity(dim, dim);
-    params.segment(0, dim * dim) = Eigen::Map<Eigen::VectorXd>(A.data(), A.size());
-    Eigen::VectorXd v = Eigen::VectorXd::Random(gauss.sizeParams());
-    v.segment(0, dim * dim) = Eigen::Map<Eigen::VectorXd>(B.data(), B.size());
-
-    std::cout << gauss.grad(x) << std::endl;
-    gauss.setParams(params);
-    Eigen::VectorXd z = Eigen::VectorXd::Zero(dim);
-    std::cout << gauss.log(z) << " - " << std::log(gauss(z)) << std::endl;
-    std::cout << gauss.gradParams(z).transpose() << std::endl;
-
     std::cout << "GAUSSIAN: Function in X test" << std::endl;
     std::cout << FunctionX<dim>()(x) << std::endl;
 
@@ -108,10 +95,27 @@ int main(int argc, char const* argv[])
     else
         std::cout << "GAUSSIAN: The X gradient is NOT correct!" << std::endl;
 
-    if (checker.setDimension(gauss.sizeParams()).checkGradient(FunctionLogParams<dim>(), GradientLogParams<dim>(), params, v))
-        std::cout << "GAUSSIAN: PARAMS gradient is CORRECT!" << std::endl;
-    else
-        std::cout << "GAUSSIAN: PARAMS gradient is NOT correct!" << std::endl;
+    if constexpr (std::is_same_v<decltype(gauss), utils::Gaussian<Params, kernels::SquaredExpFull<Params>>>) {
+        // Generate symmetric matrices for the full squared exponential kernel
+        Eigen::MatrixXd A = Eigen::MatrixXd::Random(dim, dim), B = Eigen::MatrixXd::Random(dim, dim),
+                        C(dim, dim), D(dim, dim);
+        C = 0.5 * (A + A.transpose()) + dim * Eigen::MatrixXd::Identity(dim, dim);
+        D = 0.5 * (B + B.transpose()) + dim * Eigen::MatrixXd::Identity(dim, dim);
+        params.segment(0, dim * dim) = Eigen::Map<Eigen::VectorXd>(C.data(), C.size());
+        Eigen::VectorXd v = Eigen::VectorXd::Random(gauss.sizeParams());
+        v.segment(0, dim * dim) = Eigen::Map<Eigen::VectorXd>(D.data(), D.size());
+
+        if (checker.setDimension(gauss.sizeParams()).checkGradient(FunctionLogParams<dim>(), GradientLogParams<dim>(), params, v))
+            std::cout << "GAUSSIAN: PARAMS gradient is CORRECT!" << std::endl;
+        else
+            std::cout << "GAUSSIAN: PARAMS gradient is NOT correct!" << std::endl;
+    }
+    else {
+        if (checker.setDimension(gauss.sizeParams()).checkGradient(FunctionLogParams<dim>(), GradientLogParams<dim>()))
+            std::cout << "GAUSSIAN: PARAMS gradient is CORRECT!" << std::endl;
+        else
+            std::cout << "GAUSSIAN: PARAMS gradient is NOT correct!" << std::endl;
+    }
 
     return 0;
 }
