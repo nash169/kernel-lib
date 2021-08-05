@@ -84,7 +84,7 @@ int main(int argc, char const* argv[])
     for (size_t i = 0; i < num_modes; i++) {
         // Create function
         Expansion_t f;
-        f.setReference(Eigen::MatrixXd::Random(num_reference, dim)).setParams(Eigen::VectorXd::Random(num_reference));
+        f.setSamples(Eigen::MatrixXd::Random(num_reference, dim)).setWeights(Eigen::VectorXd::Random(num_reference));
 
         // Set pair
         k.addPair(randDouble(), f);
@@ -109,12 +109,12 @@ int main(int argc, char const* argv[])
     using RiemExpansion_t = utils::Expansion<ParamsRiemann, Riemann_t>;
     RiemExpansion_t psi;
 
-    psi.setReference(X).setParams(W);
+    psi.setSamples(X).setWeights(W);
 
     for (size_t i = 0; i < num_modes; i++) {
         // Create function
         Expansion_t f;
-        f.setReference(Eigen::MatrixXd::Random(num_reference, dim)).setParams(Eigen::VectorXd::Random(num_reference));
+        f.setSamples(Eigen::MatrixXd::Random(num_reference, dim)).setWeights(Eigen::VectorXd::Random(num_reference));
 
         // Set pair
         psi.kernel().addPair(randDouble(), f);

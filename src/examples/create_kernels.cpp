@@ -28,8 +28,8 @@ int main(int argc, char const* argv[])
     // Expansion
     using Expansion_t = utils::Expansion<ParamsDefaults, Kernel_t>;
     Expansion_t psi;
-    psi.setReference(x_train);
-    psi.setParams(tools::makeVector(1));
+    psi.setSamples(x_train);
+    psi.setWeights(tools::makeVector(1));
 
     // Solution
     utils_cpp::FileManager io_manager;
