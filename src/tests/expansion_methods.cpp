@@ -49,12 +49,12 @@ int main(int argc, char const* argv[])
     std::cout << "DONE";
 
     std::cout << "EXPANSION PARAMS" << std::endl;
-    f.setParams(weights);
-    std::cout << f.params().transpose() << std::endl;
+    f.setWeights(weights);
+    std::cout << f.weights().transpose() << std::endl;
 
     std::cout << "EXPANSION REFERENCE" << std::endl;
-    f.setReference(x_i);
-    std::cout << f.reference().transpose() << std::endl;
+    f.setSamples(x_i);
+    std::cout << f.samples().transpose() << std::endl;
 
     std::cout << "EXPANSION SINGLE POINT" << std::endl;
     std::cout << f(a) << std::endl;
