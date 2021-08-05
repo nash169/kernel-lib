@@ -21,17 +21,17 @@ namespace kernel_lib {
         template <typename Params, typename Kernel>
         class Expansion {
         public:
-            Expansion() : _kernel() {}
+            Expansion() : _k() {}
 
             template <int Size>
             EIGEN_ALWAYS_INLINE double operator()(const Eigen::Matrix<double, Size, 1>& x) const
             {
                 double r = 0;
 
-                // Can parallelize this?
+                // Can I parallelize this?
                 // https://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-data.html
-                for (size_t i = 0; i < _reference.rows(); i++)
-                    r += _params(i) * _kernel.template kernelImpl<Size>(_reference.row(i), x);
+                for (size_t i = 0; i < _x.rows(); i++)
+                    r += _w(i) * _k.template kernelImpl<Size>(_x.row(i), x);
 
                 return r;
             }
@@ -51,7 +51,7 @@ namespace kernel_lib {
             template <int Size>
             Eigen::VectorXd multiEval2(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x) const
             {
-                return _kernel.gram(_reference, x).transpose() * _params;
+                return _k.gram(_x, x).transpose() * _w;
             }
 
             // Check https://stackoverflow.com/questions/47035541/specialize-only-a-part-of-one-method-of-a-template-class
@@ -69,44 +69,35 @@ namespace kernel_lib {
                 return r;
             }
 
-            const Eigen::MatrixXd& reference() const
-            {
-                return _reference;
-            }
+            const Eigen::MatrixXd& samples() const { return _x; }
 
-            const Eigen::VectorXd& params() const
-            {
-                return _params;
-            }
+            const Eigen::VectorXd& weights() const { return _w; }
 
-            virtual Expansion& setReference(const Eigen::MatrixXd& reference)
+            Kernel& kernel() { return _k; }
+
+            virtual Expansion& setSamples(const Eigen::MatrixXd& x)
             {
-                _reference = reference;
+                _x = x;
 
                 return *this;
             }
 
-            virtual Expansion& setParams(const Eigen::VectorXd& params)
+            virtual Expansion& setWeights(const Eigen::VectorXd& w)
             {
-                _params = params;
+                _w = w;
 
                 return *this;
-            }
-
-            Kernel& kernel()
-            {
-                return _kernel;
             }
 
         protected:
             /* Kernel */
-            Kernel _kernel;
+            Kernel _k;
 
             /* Parameters */
-            Eigen::VectorXd _params;
+            Eigen::VectorXd _w;
 
             /* Referece points */
-            Eigen::MatrixXd _reference;
+            Eigen::MatrixXd _x;
         };
 
         // template <>
