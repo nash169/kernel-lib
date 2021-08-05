@@ -12,7 +12,7 @@ srcdir = "."
 blddir = "build"
 
 # Tools' name and directory
-tools = {"utils_cpp": " "}
+tools = {"utils_cpp": "/home/bernardo/devs/utils-cpp/install"}
 
 
 def options(opt):
@@ -118,9 +118,9 @@ def build(bld):
         )
 
     # Build executables
-    bld.recurse("./src/examples")
+    # bld.recurse("./src/examples")
     bld.recurse("./src/tests")
-    bld.recurse("./src/benchmarks")
+    # bld.recurse("./src/benchmarks")
 
     # Install headers
     for f in includes:
