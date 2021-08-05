@@ -77,9 +77,16 @@ namespace kernel_lib {
                 // For sparse solution: https://forum.kde.org/viewtopic.php?f=74&t=128080
                 int size = std::sqrt(params.size());
 
-                _S = Eigen::Map<Eigen::MatrixXd>(const_cast<double*>(params.data()), size, size);
-
-                _llt->compute(_S);
+                if (_S.rows() != size) {
+                    _S.conservativeResize(size, size);
+                    _S = Eigen::Map<Eigen::MatrixXd>(const_cast<double*>(params.data()), size, size);
+                    // For pointer restting: https://stackoverflow.com/questions/25609457/does-unique-ptrrelease-call-the-destructor
+                    _llt.reset(new Eigen::LLT<Eigen::Ref<Eigen::MatrixXd>, Eigen::Lower>(_S));
+                }
+                else {
+                    _S = Eigen::Map<Eigen::MatrixXd>(const_cast<double*>(params.data()), size, size);
+                    _llt->compute(_S);
+                }
             }
 
             /* Get number of parameters for the specific kernel */
