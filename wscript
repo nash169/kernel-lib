@@ -12,7 +12,7 @@ srcdir = "."
 blddir = "build"
 
 # Tools' name and directory
-tools = {"utils_cpp": "/home/bernardo/devs/utils-cpp/install"}
+tools = {"utils_cpp": ""}
 
 
 def options(opt):
