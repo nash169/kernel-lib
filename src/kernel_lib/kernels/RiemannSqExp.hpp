@@ -79,10 +79,10 @@ namespace kernel_lib {
                 //                             k(i, j) += std::exp(-0.5 * std::pow(_l, 2) * pair.first) * fx(i) * fy(j);
                 //                 }
 
-                k *= AbstractKernel<Params, RiemannSqExp<Params, Function>>::_sf2 / n;
+                k *= _sf2 / n;
 
                 if (x.data() == y.data())
-                    k.diagonal().array() += AbstractKernel<Params, RiemannSqExp<Params, Function>>::_sn2;
+                    k.diagonal().array() += _sn2;
 
                 return k;
             }
@@ -93,18 +93,77 @@ namespace kernel_lib {
                 return Eigen::VectorXd::Zero(x.size());
             }
 
-            // template <typename Derived>
-            // EIGEN_ALWAYS_INLINE double gradientParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
-            // {
-            //     double r = 0, n = 0;
+            template <typename Derived>
+            EIGEN_ALWAYS_INLINE double gradientParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
+            {
+                double r = 0, dr = 0, dn = 0, n = 0, cn = 0, cr = 0;
 
-            //     for (auto& i : _f.eigenPair()) {
-            //         n += std::exp(-0.5 * std::pow(_l, 2));
-            //         r -= std::pow(_l, 2) * i.first * std::exp(-0.5 * std::pow(_l, 2) * i.first) * _f(x, i.first) * _f(y, i.first);
-            //     }
+                for (auto& pair : _pairs) {
+                    // Repeated term
+                    cn = std::exp(-0.5 * std::pow(_l, 2) * pair.first);
 
-            //     return r / n / _f.eigenPair().size();
-            // }
+                    // Normalization term
+                    n += cn;
+
+                    // Normalization derivative
+                    dn += pair.first * cn;
+
+                    // Repeated term
+                    cr = cn * pair.second.template operator()
+                            < (Derived::RowsAtCompileTime == 1)
+                        ? Derived::ColsAtCompileTime
+                        : Derived::RowsAtCompileTime > (x)*pair.second.template operator() < (Derived::RowsAtCompileTime == 1) ? Derived::ColsAtCompileTime
+                                                                                                                               : Derived::RowsAtCompileTime > (y);
+                    // Kernel
+                    r += cr;
+
+                    // Kernel derivative
+                    dr += pair.first * cr;
+                }
+
+                return std::pow(_l, 2) / n * (dn * r / n - dr);
+
+                // for (auto& i : _f.eigenPair()) {
+                //     n += std::exp(-0.5 * std::pow(_l, 2));
+                //     r -= std::pow(_l, 2) * i.first * std::exp(-0.5 * std::pow(_l, 2) * i.first) * _f(x, i.first) * _f(y, i.first);
+                // }
+
+                // return r / n / _f.eigenPair().size();
+            }
+
+            template <int Size>
+            EIGEN_DEVICE_FUNC Eigen::MatrixXd gramGradParams(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x, const Eigen::Matrix<double, Eigen::Dynamic, Size>& y) const
+            {
+                size_t x_samples = x.rows(), y_samples = y.rows();
+
+                Eigen::MatrixXd grad(x_samples * y_samples, 3), r(x_samples, y_samples);
+                double n = 0, dn = 0, c = 0;
+
+                for (auto& pair : _pairs) {
+                    n += std::exp(-0.5 * std::pow(_l, 2) * pair.first);
+                    dn += pair.first * std::exp(-0.5 * std::pow(_l, 2) * pair.first);
+                }
+
+                // #pragma omp parallel
+                for (auto& pair : _pairs) {
+                    c = std::exp(-0.5 * std::pow(_l, 2) * pair.first);
+
+                    r = c / n * pair.second.multiEval(x) * pair.second.multiEval(y).transpose();
+
+                    grad.col(0) += 2 * _sf2 * Eigen::Map<Eigen::VectorXd>(r.data(), x_samples * y_samples);
+
+                    grad.col(2) += _sf2 * std::pow(_l, 2) * (dn / n - pair.first) * Eigen::Map<Eigen::VectorXd>(r.data(), x_samples * y_samples);
+                }
+
+                if (x.data() == y.data()) {
+                    r = 2 * _sn2 * Eigen::MatrixXd::Identity(x_samples, y_samples);
+                    grad.col(1) = Eigen::Map<Eigen::VectorXd>(r.data(), x_samples * y_samples);
+                }
+                else
+                    grad.col(1).setZero();
+
+                return grad;
+            }
 
             // EigenFunction& eigenFunction()
             // {
@@ -132,6 +191,10 @@ namespace kernel_lib {
 
         protected:
             double _l;
+
+            // Lift signal and noise variance
+            using AbstractKernel<Params, RiemannSqExp<Params, Function>>::_sf2;
+            using AbstractKernel<Params, RiemannSqExp<Params, Function>>::_sn2;
 
             // std::vector<double> _d;
             // std::vector<EigenFunction> _f;
