@@ -118,9 +118,9 @@ def build(bld):
         )
 
     # Build executables
-    # bld.recurse("./src/examples")
+    bld.recurse("./src/examples")
     bld.recurse("./src/tests")
-    # bld.recurse("./src/benchmarks")
+    bld.recurse("./src/benchmarks")
 
     # Install headers
     for f in includes:
