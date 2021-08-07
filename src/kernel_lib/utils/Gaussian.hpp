@@ -41,6 +41,7 @@ namespace kernel_lib {
             template <int Size>
             EIGEN_ALWAYS_INLINE double operator()(const Eigen::Matrix<double, Size, 1>& x) const
             {
+                // Here we are using the total kernel (change this)
                 return _weight * _kernel.template kernelImpl<Size>(x, _mu);
             }
 
@@ -63,6 +64,7 @@ namespace kernel_lib {
             template <int Size>
             EIGEN_ALWAYS_INLINE auto grad(const Eigen::Matrix<double, Size, 1>& x) const
             {
+                // Here we are using the total kernel (change this)
                 return _weight * _kernel.template gradImpl<Size>(x, _mu, 1);
             }
 
