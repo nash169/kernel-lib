@@ -7,6 +7,8 @@
 
 #include <utils_cpp/UtilsCpp.hpp>
 
+#include <vector>
+
 using namespace kernel_lib;
 
 // Kernel parameters
@@ -64,6 +66,40 @@ double randDouble(double fMin = 0, double fMax = 1)
     return fMin + f * (fMax - fMin);
 }
 
+template <int size, typename Kernel>
+struct FunctionParamsT {
+    Eigen::Matrix<double, size, 1> x = Eigen::VectorXd::Zero(size);
+    Eigen::Matrix<double, size, 1> y = Eigen::VectorXd::Ones(size);
+
+    FunctionParamsT(Kernel ker) : k(ker) {}
+
+    double operator()(const Eigen::VectorXd& params)
+    {
+        k.setParams(params);
+
+        return k(x, y);
+    }
+
+    Kernel k;
+};
+
+template <int size, typename Kernel>
+struct GradientParamsT {
+    Eigen::Matrix<double, size, 1> x = Eigen::VectorXd::Zero(size);
+    Eigen::Matrix<double, size, 1> y = Eigen::VectorXd::Ones(size);
+
+    GradientParamsT(Kernel ker) : k(ker) {}
+
+    Eigen::VectorXd operator()(const Eigen::VectorXd& params)
+    {
+        k.setParams(params);
+
+        return k.gradParams(x, y);
+    }
+
+    Kernel k;
+};
+
 int main(int argc, char const* argv[])
 {
     // Data
@@ -71,6 +107,22 @@ int main(int argc, char const* argv[])
 
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_X, dim), Y = Eigen::MatrixXd::Random(num_Y, dim);
     Eigen::VectorXd a = Eigen::VectorXd::Random(dim), b = Eigen::VectorXd::Random(dim), W = Eigen::VectorXd::Random(num_X);
+
+    // Data
+    Eigen::MatrixXd test_x(3, 2), test_y(5, 2);
+    test_x << 0.097540404999410, 0.957506835434298,
+        0.278498218867048, 0.964888535199277,
+        0.546881519204984, 0.157613081677548;
+
+    test_y << 0.970592781760616, 0.141886338627215,
+        0.957166948242946, 0.421761282626275,
+        0.485375648722841, 0.915735525189067,
+        0.800280468888800, 0.792207329559554,
+        0.097540404999410, 0.278498218867048;
+
+    Eigen::VectorXd test_a(2), test_b(2);
+    test_a << 0.097540404999410, 0.957506835434298;
+    test_b << 0.970592781760616, 0.141886338627215;
 
     // Kernel
     using Kernel_t = kernels::SquaredExp<ParamsExp>;
@@ -90,22 +142,21 @@ int main(int argc, char const* argv[])
         k.addPair(randDouble(), f);
     }
 
-    // std::cout << k(a, b) << std::endl;
-    // std::cout << std::endl;
-    // std::cout << k.kernel(a, b) << std::endl;
-    // std::cout << std::endl;
-    // std::cout << k.gram(X, Y) << std::endl;
-    // std::cout << std::endl;
-    // std::cout << k.gram2(X, Y) << std::endl;
-    // std::cout << std::endl;
-    // std::cout << k.gram3(X, Y) << std::endl;
+    FunctionParamsT<dim, Riemann_t> function(k);
+    GradientParamsT<dim, Riemann_t> gradient(k);
 
-    // std::cout << Eigen::nbThreads() << std::endl;
-    // {
-    //     utils_cpp::Timer timer;
-    //     k.gram(X, Y);
-    // }
+    Eigen::Vector3d params = Eigen::Vector3d::Random();
 
+    // std::cout << function(params) << std::endl;
+    // std::cout << gradient(params).transpose() << std::endl;
+
+    utils_cpp::DerivativeChecker checker(k.sizeParams());
+
+    std::cout << k.gradParams(test_a, test_b).transpose() << std::endl;
+    // checker.checkGradient(function, gradient);
+    std::cout << k.gramGradParams(test_x, test_y) << std::endl;
+
+    // Riemann kernel expansion
     using RiemExpansion_t = utils::Expansion<ParamsRiemann, Riemann_t>;
     RiemExpansion_t psi;
 
@@ -120,12 +171,7 @@ int main(int argc, char const* argv[])
         psi.kernel().addPair(randDouble(), f);
     }
 
-    psi.temp(Y);
-
-    // {
-    //     utils_cpp::Timer timer;
-    //     psi.temp(Y);
-    // }
+    // psi.temp(Y);
 
     return 0;
 }
