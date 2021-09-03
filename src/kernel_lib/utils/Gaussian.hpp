@@ -2,6 +2,7 @@
 #define KERNELLIB_UTILS_GAUSSIAN_HPP
 
 #include <math.h>
+#include <stdexcept>
 
 #include "kernel_lib/tools/helper.hpp"
 #include "kernel_lib/tools/macros.hpp"
@@ -32,6 +33,7 @@ namespace kernel_lib {
                 if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>)
                     _weight = 1 / std::sqrt(std::pow(2 * M_PI * _kernel._l, _mu.size()));
                 else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>)
+                    // it should be std::pow(_kernel._llt->matrixL().determinant(), 2) instead of  _kernel._S.determinant() (check)
                     _weight = 1 / std::sqrt(std::pow(2 * M_PI, _mu.size()) * _kernel._S.determinant());
                 else
                     _weight = 1;
@@ -129,6 +131,29 @@ namespace kernel_lib {
                 }
             }
 
+            /* Get covariance matrix cholesky decomposition obj */
+            template <typename T>
+            inline const T& covariance()
+            {
+                if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>)
+                    return _kernel._l;
+                else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>)
+                    return *_kernel._llt.get();
+                else
+                    throw std::invalid_argument("No covariance available");
+            }
+
+            /* Get size params */
+            size_t sizeParams()
+            {
+                if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>)
+                    return _mu.size() + 1;
+                else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>)
+                    return _mu.size() + _mu.size() * _mu.size();
+                else
+                    return 1;
+            }
+
             /* Set parameters */
             Gaussian& setParams(const Eigen::VectorXd& params)
             {
@@ -153,6 +178,7 @@ namespace kernel_lib {
                     _mu = params.segment(size * size, size);
 
                     // Set normalization (see SquaredExpFull for the matrix _S)
+                    // it should be std::pow(_kernel._llt->matrixL().determinant(), 2) instead of  _kernel._S.determinant() (check)
                     _weight = 1 / std::sqrt(std::pow(2 * M_PI, size) * _kernel._S.determinant());
                     // Eigen::MatrixXd det = Eigen::Map<Eigen::MatrixXd>(params.segment(0, _kernel.sizeParameters() - 1).data(), _mu.size(), _mu.size());
                 }
@@ -161,16 +187,6 @@ namespace kernel_lib {
                 }
 
                 return *this;
-            }
-
-            size_t sizeParams()
-            {
-                if constexpr (std::is_same_v<Kernel, kernels::SquaredExp<Params>>)
-                    return _mu.size() + 1;
-                else if constexpr (std::is_same_v<Kernel, kernels::SquaredExpFull<Params>>)
-                    return _mu.size() + _mu.size() * _mu.size();
-                else
-                    return 1;
             }
 
         protected:
