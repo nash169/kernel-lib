@@ -4,6 +4,7 @@
 #include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/helper.hpp"
 
+// Here it can be avoided to include the header and just init the class
 #include "kernel_lib/utils/Gaussian.hpp"
 
 namespace kernel_lib {
