@@ -59,8 +59,14 @@ int main(int argc, char const* argv[])
     std::cout << "EXPANSION SINGLE POINT" << std::endl;
     std::cout << f(a) << std::endl;
 
-    std::cout << "EXPANSION MULTIPLE POINT" << std::endl;
+    std::cout << "EXPANSION MULTIPLE POINTS" << std::endl;
     std::cout << f.multiEval(x).transpose() << std::endl;
+
+    std::cout << "EXPANSION GRADIENT" << std::endl;
+    std::cout << f.grad(a).transpose() << std::endl;
+
+    std::cout << "EXPANSION MULTIPLE GRADIENTS" << std::endl;
+    std::cout << f.multiGrad(x) << std::endl;
 
     return 0;
 }

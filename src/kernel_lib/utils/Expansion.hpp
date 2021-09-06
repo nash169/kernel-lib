@@ -69,6 +69,31 @@ namespace kernel_lib {
                 return r;
             }
 
+            /* Gradient */
+            template <int Size>
+            EIGEN_ALWAYS_INLINE Eigen::Matrix<double, Size, 1> grad(const Eigen::Matrix<double, Size, 1>& x) const
+            {
+                Eigen::Matrix<double, Size, 1> grad = Eigen::VectorXd::Zero(x.size());
+
+                for (size_t i = 0; i < _x.rows(); i++)
+                    grad += _w(i) * _k.template gradImpl<Size>(_x.row(i), x);
+
+                return grad;
+            }
+
+            /* Gradient  multiple points */
+            template <int Size>
+            Eigen::Matrix<double, Eigen::Dynamic, Size> multiGrad(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x) const
+            {
+                Eigen::Matrix<double, Eigen::Dynamic, Size> grad(x.rows(), x.cols());
+
+#pragma omp parallel for
+                for (size_t i = 0; i < grad.rows(); i++)
+                    grad.row(i) = this->grad<Size>(x.row(i));
+
+                return grad;
+            }
+
             const Eigen::MatrixXd& samples() const { return _x; }
 
             const Eigen::VectorXd& weights() const { return _w; }

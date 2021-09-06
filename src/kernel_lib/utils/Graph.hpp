@@ -65,6 +65,7 @@ namespace kernel_lib {
                 // Eigen triplet
                 std::vector<Eigen::Triplet<double>> tripletList;
 
+                // How to parallelize this?
                 for (size_t i = 0; i < x.rows(); i++) {
                     std::vector<size_t> idx = sort(x.rowwise() - x.row(i));
                     for (size_t j = 0 + exclude; j < k; j++)
