@@ -40,6 +40,13 @@ namespace kernel_lib {
                 return gradImpl < (Derived::RowsAtCompileTime == 1) ? Derived::ColsAtCompileTime : Derived::RowsAtCompileTime > (x.derived(), y.derived(), i);
             }
 
+            /* Hessian */
+            template <typename Derived, typename OtherDerived>
+            EIGEN_ALWAYS_INLINE auto hess(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<OtherDerived>& y, const size_t& i = 3) const
+            {
+                return hessImpl < (Derived::RowsAtCompileTime == 1) ? Derived::ColsAtCompileTime : Derived::RowsAtCompileTime > (x.derived(), y.derived(), i);
+            }
+
             /* Parameters' gradient */
             template <typename Derived, typename OtherDerived>
             EIGEN_ALWAYS_INLINE auto gradParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<OtherDerived>& y) const
@@ -79,6 +86,22 @@ namespace kernel_lib {
                         g.row(j * x_samples + i) = gradImpl<Size>(x.row(i), y.row(j), k);
 
                 return g;
+            }
+
+            /* Gram matrix hessian */
+            template <int Size>
+            Eigen::MatrixXd gramHess(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x, const Eigen::Matrix<double, Eigen::Dynamic, Size>& y, const size_t& k = 3) const
+            {
+                size_t x_samples = x.rows(), y_samples = y.rows(), d = x.cols();
+
+                Eigen::MatrixXd h(x_samples * y_samples, d * d);
+
+#pragma omp parallel for collapse(2)
+                for (size_t j = 0; j < y_samples; j++)
+                    for (size_t i = 0; i < x_samples; i++)
+                        h.row(j * x_samples + i) = Eigen::Map<Eigen::VectorXd>(Eigen::MatrixXd(hessImpl<Size>(x.row(i), y.row(j), k)).data(), d * d);
+
+                return h;
             }
 
             /* Gram matrix gradient with respect to parameters */
@@ -150,6 +173,13 @@ namespace kernel_lib {
             EIGEN_ALWAYS_INLINE auto gradImpl(const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& x, const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& y, const size_t& i = 1) const
             {
                 return _sf2 * static_cast<const Kernel*>(this)->gradient(x, y, i);
+            }
+
+            /* Hessian Implementation */
+            template <int Size>
+            EIGEN_ALWAYS_INLINE auto hessImpl(const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& x, const Eigen::Ref<const Eigen::Matrix<double, Size, 1>, 0, Eigen::InnerStride<>>& y, const size_t& i = 3) const
+            {
+                return _sf2 * static_cast<const Kernel*>(this)->hessian(x, y, i);
             }
 
             /* Gradient parameters implementation */

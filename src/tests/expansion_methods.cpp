@@ -68,5 +68,11 @@ int main(int argc, char const* argv[])
     std::cout << "EXPANSION MULTIPLE GRADIENTS" << std::endl;
     std::cout << f.multiGrad(x) << std::endl;
 
+    std::cout << "EXPANSION HESSIAN" << std::endl;
+    std::cout << f.hess(a) << std::endl;
+
+    std::cout << "EXPANSION MULTIPLE HESSIANS" << std::endl;
+    std::cout << f.multiHess(x) << std::endl;
+
     return 0;
 }

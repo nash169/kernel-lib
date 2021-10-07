@@ -94,6 +94,31 @@ namespace kernel_lib {
                 return grad;
             }
 
+            /* Hessian */
+            template <int Size>
+            EIGEN_ALWAYS_INLINE Eigen::Matrix<double, Size, Size> hess(const Eigen::Matrix<double, Size, 1>& x) const
+            {
+                Eigen::Matrix<double, Size, Size> H = Eigen::MatrixXd::Zero(x.rows(), x.rows());
+
+                for (size_t i = 0; i < _x.rows(); i++)
+                    H += _w(i) * _k.template hessImpl<Size>(_x.row(i), x);
+
+                return H;
+            }
+
+            /* Hessian  multiple points */
+            template <int Size>
+            Eigen::MatrixXd multiHess(const Eigen::Matrix<double, Eigen::Dynamic, Size>& x) const
+            {
+                Eigen::MatrixXd H(x.rows(), x.cols() * x.cols());
+
+#pragma omp parallel for
+                for (size_t i = 0; i < H.rows(); i++)
+                    H.row(i) = Eigen::Map<Eigen::VectorXd>(this->hess<Size>(x.row(i)).data(), x.cols() * x.cols());
+
+                return H;
+            }
+
             const Eigen::MatrixXd& samples() const { return _x; }
 
             const Eigen::VectorXd& weights() const { return _w; }

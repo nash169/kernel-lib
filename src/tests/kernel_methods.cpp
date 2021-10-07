@@ -37,14 +37,14 @@ int main(int argc, char const* argv[])
     b << 0.970592781760616, 0.141886338627215;
 
     // Params
-    // Eigen::VectorXd params(3);
-    // params << std::log(1.5), std::log(2.0), std::log(0.7);
+    Eigen::VectorXd params(3);
+    params << std::log(1.5), std::log(2.0), std::log(0.7);
 
-    Eigen::VectorXd params(6);
-    params << std::log(1.5), std::log(2.0), 1.3, 0.3, 0.3, 1.1;
+    // Eigen::VectorXd params(6);
+    // params << std::log(1.5), std::log(2.0), 1.3, 0.3, 0.3, 1.1;
 
     std::cout << "KERNEL CREATION AND PARAMS SIZE" << std::endl;
-    using Kernel_t = kernels::SquaredExpFull<Params>;
+    using Kernel_t = kernels::SquaredExp<Params>; // kernels::SquaredExpFull<Params>;
     Kernel_t k;
     std::cout << k.sizeParams() << std::endl;
 
@@ -73,6 +73,19 @@ int main(int argc, char const* argv[])
 
     std::cout << "GRADIENT XX" << std::endl;
     std::cout << k.gramGrad(x, x) << std::endl;
+
+    std::cout << "HESSIAN SINGLE POINTS xy, Xy, XX" << std::endl;
+    std::cout << k.hess(a, b) << std::endl;
+    std::cout << " - " << std::endl;
+    std::cout << k.hess(x.row(0), b) << std::endl;
+    std::cout << " - " << std::endl;
+    std::cout << k.hess(x.row(0), x.row(0)) << std::endl;
+
+    std::cout << "HESSIAN XY" << std::endl;
+    std::cout << k.gramHess(x, y) << std::endl;
+
+    // std::cout << "HESSIAN XX" << std::endl;
+    // std::cout << k.gramHess(x, x) << std::endl;
 
     std::cout << "GRADIENT PARAMS SINGLE POINTS xy, Xy, XX" << std::endl;
     std::cout << k.gradParams(a, b).transpose() << " - " << k.gradParams(x.row(0), b).transpose() << " - " << k.gradParams(x.row(0), x.row(0)).transpose() << std::endl;
