@@ -102,12 +102,16 @@ def insert_header(fname, prefix, postfix, license, kept_header=[]):
         if check_prefix:
             in_header = True
 
+        # Check if off header (without postfix)
+        if not has_postfix and line[0:len(prefix)] != prefix:
+            in_header = False
+
         # Write line
         if (not in_header) and (not check_prefix) and (not header):
             output.write(line)
 
-        # Check if off header
-        if check_postfix or (not has_postfix and line[0:len(prefix)] != prefix):
+        # Check if off header (with postfix)
+        if check_postfix:
             in_header = False
 
     output.close()
