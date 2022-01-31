@@ -1,11 +1,38 @@
+/*
+    This file is part of kernel-lib.
+
+    Copyright (c) 2020, 2021, 2022 Bernardo Fichera <bernardo.fichera@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
 #include <iostream>
+
 #include <kernel_lib/Kernel.hpp>
-#include <utils_cpp/UtilsCpp.hpp>
+
+#include <utils_lib/DerivativeChecker.hpp>
+
+using namespace utils_lib;
+using namespace kernel_lib;
 
 #define KERNEL kernels::SquaredExpFull<Params>
 #define GAUSS utils::Gaussian<Params, KERNEL>
-
-using namespace kernel_lib;
 
 struct Params {
     struct kernel : public defaults::kernel {
@@ -88,7 +115,7 @@ int main(int argc, char const* argv[])
     std::cout << "GAUSSIAN: Gradient (log) in PARAMS" << std::endl;
     std::cout << GradientLogParams<dim>()(params).transpose() << std::endl;
 
-    utils_cpp::DerivativeChecker checker(dim);
+    DerivativeChecker checker(dim);
 
     if (checker.checkGradient(FunctionX<dim>(), GradientX<dim>()))
         std::cout << "GAUSSIAN: The X gradient is CORRECT!" << std::endl;

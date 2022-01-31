@@ -23,41 +23,47 @@
 #    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #    SOFTWARE.
 
-import numpy as np
+from waflib.Configure import conf
+from utils import check_include, check_lib
 
 
-def get_line(name, fs):
-    while True:
-        try:
-            line = next(fs)
-        except StopIteration:
-            return
+def options(opt):
+    # Required package options
+    opt.load("eigen corrade", tooldir="waf_tools")
 
-        if name in line:
-            try:
-                next(fs)
-            except StopIteration:
-                return
-
-            while True:
-                try:
-                    line = next(fs)
-                except StopIteration:
-                    return
-
-                if line in ["\n", "\r\n"]:
-                    break
-                else:
-                    yield line
-        elif not line:
-            break
+    # Options
+    opt.add_option(
+        "--kernellib-path", type="string", help="path to kernel-lib", dest="kernellib_path"
+    )
 
 
-def get_data(file_path, *args):
-    M = {}
-    for var in args:
-        with open(file_path) as fs:
-            g = get_line(var, fs)
-            M[var] = np.loadtxt(g)
+@conf
+def check_kernellib(ctx):
+    # Set the search path
+    if ctx.options.kernellib_path is None:
+        path_check = ["/usr/local", "/usr"]
+    else:
+        path_check = [ctx.options.kernellib_path]
 
-    return M
+    # kernel-lib includes
+    check_include(ctx, "KERNELLIB", [""], [
+                  "kernel_lib/Kernel.hpp"], path_check)
+
+    # kernel-lib libs
+    check_lib(ctx, "KERNELLIB", "", ["libKernel"], path_check)
+
+    if ctx.env.LIB_KERNELLIB or ctx.env.STLIB_KERNELLIB:
+        # Add dependencies to require libraries
+        ctx.get_env()["requires"] = ctx.get_env()[
+            "requires"] + ["EIGEN", "CORRADE"]
+
+        # Check for dependencies
+        ctx.load("eigen corrade", tooldir="waf_tools")
+
+        # Add library
+        ctx.get_env()["libs"] += ["KERNELLIB"]
+
+
+def configure(cfg):
+    if not cfg.env.LIB_KERNELLIB and not cfg.env.STLIB_KERNELLIB:
+        cfg.check_kernellib()

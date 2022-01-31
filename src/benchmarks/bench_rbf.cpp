@@ -1,14 +1,40 @@
+/*
+    This file is part of kernel-lib.
+
+    Copyright (c) 2020, 2021, 2022 Bernardo Fichera <bernardo.fichera@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
 #include <chrono>
 #include <iostream>
 #include <thread>
+#include <type_traits>
 
 #include <kernel_lib/kernels/RiemannSqExp.hpp>
 #include <kernel_lib/kernels/SquaredExp.hpp>
 #include <kernel_lib/utils/Expansion.hpp>
-#include <utils_cpp/UtilsCpp.hpp>
 
-#include <type_traits>
+#include <utils_lib/FileManager.hpp>
+#include <utils_lib/Timer.hpp>
 
+using namespace utils_lib;
 using namespace kernel_lib;
 
 struct Params {
@@ -69,7 +95,7 @@ int main(int argc, char const* argv[])
 
     // std::cout << "BENCHMARK: Kernel evaluation" << std::endl;
     // {
-    //     utils_cpp::Timer timer;
+    //     Timer timer;
     //     k.gram<dim>(X, Y);
     // }
 
@@ -80,7 +106,7 @@ int main(int argc, char const* argv[])
 
     // psi.setReference(X).setParams(W);
     // {
-    //     utils_cpp::Timer timer;
+    //     Timer timer;
     //     psi.multiEval(Y);
     // }
 
@@ -95,7 +121,7 @@ int main(int argc, char const* argv[])
     // }
 
     // {
-    //     utils_cpp::Timer timer;
+    //     Timer timer;
     //     riemann.temp(X, Y);
     // }
 
@@ -105,7 +131,7 @@ int main(int argc, char const* argv[])
     // Eigen::MatrixXf A = Eigen::MatrixXf::Random(6, dim);
     // Eigen::VectorXf a = Eigen::VectorXf::Random(dim);
 
-    // utils_cpp::FileManager io_manager;
+    // FileManager io_manager;
 
     // io_manager.setFile("rsc/test_point.csv").write("x", a, "X", A);
 
