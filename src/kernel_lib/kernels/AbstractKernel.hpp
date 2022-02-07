@@ -57,7 +57,26 @@ namespace kernel_lib {
                 return kernelImpl < (Derived::RowsAtCompileTime == 1) ? Derived::ColsAtCompileTime : Derived::RowsAtCompileTime > (x.derived(), y.derived());
             }
 
-            /* Gradient */
+            /**
+             * @brief Returns the gradient of the kernel with respect to either the first or the second input
+             *
+             * @tparam Derived
+             * @tparam OtherDerived
+             *
+             * @param[in] x
+             * @param[in] y
+             * @param[in] i (optional)
+             *
+             * @return The gradient of the kernel with respect to the input
+             *
+             * @warning no warning here at the moment
+             *
+             * @remark no remark
+             *
+             * @see do not know
+             *
+             * @ref no ref
+             */
             template <typename Derived, typename OtherDerived>
             EIGEN_ALWAYS_INLINE auto grad(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<OtherDerived>& y, const size_t& i = 1) const
             {
