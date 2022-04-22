@@ -408,3 +408,4 @@ TSWLatexianTemp*
 
 .DS_Store
 waf_configure
+outputs/
