@@ -61,3 +61,13 @@ def get_data(file_path, *args):
             M[var] = np.loadtxt(g)
 
     return M
+
+
+def draw_mesh(x, y, z, triangles, function):
+    from mayavi import mlab
+    mlab.triangular_mesh(x, y, z, triangles, scalars=function)
+    v_options = {'mode': 'sphere',
+                 'scale_factor': 1e-1, }
+    mlab.points3d(x[0], y[0], z[0], **v_options)
+
+    print(x[0], y[0], z[0])
