@@ -96,4 +96,8 @@
 #define PARAM_STRING(Name, Value) \
     static constexpr const char* Name() { return Value; }
 
+// Automatic derivation of the vector size at compile time
+#define SIZE \
+    (Derived::RowsAtCompileTime == 1) ? Derived::ColsAtCompileTime : Derived::RowsAtCompileTime
+
 #endif // KERNELLIB_TOOLS_MACROS_HPP
