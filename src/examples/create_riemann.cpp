@@ -125,7 +125,7 @@ int main(int argc, char const* argv[])
             X_train.row(i) = torus_embed(Eigen::RowVector2d(x_distr(eng), y_distr(eng)));
     }
 
-    mn.setFile("rsc/riemann.csv")
+    mn.setFile("output/riemann.csv")
         .write("NODES", X, "CHART", X_chart, "EMBED", X_embed, "INDEX", I,
             "SURF", k.gram(X_embed, Eigen::MatrixXd(X.row(2777))),
             "MESH", k.gram(X, Eigen::MatrixXd(X.row(2777))),
