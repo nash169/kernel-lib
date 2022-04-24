@@ -137,11 +137,11 @@ int main(int argc, char const* argv[])
     std::cout << "GRADIENT PARAMS SINGLE POINTS xy, Xy, XX" << std::endl;
     std::cout << k.gradParams(x, y).transpose() << " - " << k.gradParams(X.row(0), y).transpose() << " - " << k.gradParams(X.row(0), X.row(0)).transpose() << std::endl;
 
-    // std::cout << "GRADIENT PARAMS XY" << std::endl;
-    // std::cout << k.gramGradParams(X, Y) << std::endl;
+    std::cout << "GRADIENT PARAMS XY" << std::endl;
+    std::cout << k.gramGradParams(X, Y) << std::endl;
 
-    // std::cout << "GRADIENT PARAMS XX" << std::endl;
-    // std::cout << k.gramGradParams(X, X) << std::endl;
+    std::cout << "GRADIENT PARAMS XX" << std::endl;
+    std::cout << k.gramGradParams(X, X) << std::endl;
 
     return 0;
 }
