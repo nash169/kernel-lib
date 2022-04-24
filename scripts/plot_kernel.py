@@ -93,6 +93,6 @@ elif kernel == 'riemann':
     K = data["GRAM"]
 
     x, y, z = (N[:, i] for i in range(3))
-    draw_mesh(x, y, z, I, F)
+    draw_mesh(x, y, z, I, F, 2777)
 
     plt.show()

@@ -38,7 +38,7 @@ struct ParamsExp {
     };
 
     struct exp_sq : public defaults::exp_sq {
-        PARAM_SCALAR(double, l, -2.30259);
+        PARAM_SCALAR(double, l, -4.6052); // -4.6052 -2.99573 -2.30259 -0.6931 (0.01 0.05 0.1 0.5)
     };
 };
 
@@ -55,7 +55,9 @@ struct ParamsRiemann {
 
 int main(int argc, char const* argv[])
 {
-    std::string manifold = (argc > 1) ? argv[1] : "torus";
+    std::string manifold = "torus";
+    int num_modes = 100;
+
     FileManager mn;
 
     // Samples on manifold
@@ -71,8 +73,6 @@ int main(int argc, char const* argv[])
     using Expansion_t = utils::Expansion<ParamsExp, Kernel_t>;
     using Riemann_t = kernels::RiemannSqExp<ParamsRiemann, Expansion_t>;
     Riemann_t k;
-
-    int num_modes = (argc > 2) ? std::stoi(argv[2]) : 10;
 
     for (size_t i = 0; i < num_modes; i++) {
         Expansion_t f; // Create eigenfunction
@@ -127,8 +127,8 @@ int main(int argc, char const* argv[])
 
     mn.setFile("rsc/riemann.csv")
         .write("NODES", X, "CHART", X_chart, "EMBED", X_embed, "INDEX", I,
-            "SURF", k.gram(X_embed, Eigen::MatrixXd(X.row(100))),
-            "MESH", k.gram(X, Eigen::MatrixXd(X.row(100))),
+            "SURF", k.gram(X_embed, Eigen::MatrixXd(X.row(2777))),
+            "MESH", k.gram(X, Eigen::MatrixXd(X.row(2777))),
             "GRAM", k.gram(X_train, X_train));
 
     return 0;
