@@ -101,7 +101,7 @@ namespace kernel_lib {
                 Eigen::Matrix<double, Size, 1> grad = Eigen::VectorXd::Zero(x.size());
 
                 for (size_t i = 0; i < _x.rows(); i++)
-                    grad += _w(i) * _k.template gradImpl<Size>(_x.row(i), x);
+                    grad += _w(i) * _k.template gradImpl<Size>(_x.row(i), x, 0);
 
                 return grad;
             }
