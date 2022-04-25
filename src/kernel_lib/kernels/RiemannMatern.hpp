@@ -25,11 +25,7 @@
 #ifndef KERNELLIB_KERNELS_RIEMANNMATERN_HPP
 #define KERNELLIB_KERNELS_RIEMANNMATERN_HPP
 
-#include "kernel_lib/kernels/AbstractKernel.hpp"
-#include "kernel_lib/tools/macros.hpp"
-#include "kernel_lib/tools/math.hpp"
-
-#include "kernel_lib/tools/helper.hpp"
+#include "kernel_lib/kernels/RiemannSqExp.hpp"
 
 namespace kernel_lib {
 
@@ -39,76 +35,48 @@ namespace kernel_lib {
             PARAM_SCALAR(double, l, 1);
 
             // Topological dimension
-            PARAM_SCALAR(double, d, 3);
+            PARAM_SCALAR(double, d, 2);
 
-            //
+            // Smoothness parameter
             PARAM_SCALAR(double, nu, 1.5);
         };
     } // namespace defaults
 
     namespace kernels {
         template <typename Params, typename EigenFunction>
-        class RiemannMatern : public AbstractKernel<Params, RiemannMatern<Params, EigenFunction>> {
+        class RiemannMatern : public RiemannSqExp<Params, EigenFunction> {
         public:
-            RiemannMatern() : _l(std::exp(Params::riemann_matern::l())), _d(Params::riemann_matern::d()), _nu(Params::riemann_matern::nu())
-            {
-                /* Normalization parameters*/
-                _n = 0;
-
-                for (auto& i : _f.eigenPair())
-                    _n += std::pow(1 / std::pow(_l, 2) + i.first, -_nu - _d * 0.5);
-
-                _n /= _f.eigenPair().size();
-            }
-
-            /* Overload kernel for handling single sample evaluation */
-            template <typename Derived>
-            inline __attribute__((always_inline)) double kernel(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y) const
-            {
-                double r = 0;
-
-                for (auto& i : _f.eigenPair())
-                    r += std::pow(1 / std::pow(_l, 2) + i.first, -_nu - _d * 0.5) * _f(x, i.first) * _f(y, i.first);
-
-                return r / _n;
-            }
-
-            template <typename Derived>
-            inline __attribute__((always_inline)) auto gradient(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
-            {
-                return Eigen::VectorXd::Zero(x.size());
-            }
-
-            template <typename Derived>
-            inline __attribute__((always_inline)) double gradientParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
-            {
-                return 0;
-            }
+            RiemannMatern() : RiemannSqExp<Params, EigenFunction>(std::exp(Params::riemann_matern::l())),
+                              _dim(Params::riemann_matern::d()),
+                              _nu(Params::riemann_matern::nu()) {}
 
         protected:
-            double _l, _nu, _d, _n;
+            // Length scale
+            using RiemannSqExp<Params, EigenFunction>::_l;
 
-            Eigen::VectorXd parameters() const override
+            // Eigenvalues
+            using RiemannSqExp<Params, EigenFunction>::_d;
+
+            // Eigenfunctions
+            using RiemannSqExp<Params, EigenFunction>::_f;
+
+            // Spectral density
+            using RiemannSqExp<Params, EigenFunction>::_s;
+
+            double _nu, _dim;
+
+            void spectral()
             {
-                return tools::makeVector(std::log(_l));
+                _s = (1 / std::pow(_l, 2) + _d.array()).pow(-_nu - 0.5 * _dim);
+                _s /= _s.sum();
             }
 
-            /* Set specific kernel parameters */
-            void setParameters(const Eigen::VectorXd& params) override
+            Eigen::VectorXd spectralGrad() const
             {
-                _l = std::exp(params(0));
-
-                /* Normalization parameters*/
-                _n = 0;
-
-                for (auto& i : _f.eigenPair())
-                    _n += std::pow(1 / std::pow(_l, 2) + i.first, -_nu - _d * 0.5);
-
-                _n /= _f.eigenPair().size();
+                double a = -_nu - 0.5 * _dim;
+                Eigen::VectorXd ds = 2 * a * std::pow(_l, -2) * (std::pow(_l, -2) + _d.array()).pow(-1);
+                return _s.array() * ((ds.array() * _s.array()).sum() - ds.array());
             }
-
-            /* Get number of parameters for the specific kernel */
-            size_t sizeParameters() const override { return 1; }
         };
 
     } // namespace kernels

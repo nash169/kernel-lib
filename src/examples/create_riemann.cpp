@@ -25,13 +25,22 @@
 #include <iostream>
 #include <random>
 
-#include <kernel_lib/Kernel.hpp>
 #include <utils_lib/FileManager.hpp>
+
+#include <kernel_lib/kernels/RiemannMatern.hpp>
+#include <kernel_lib/kernels/RiemannSqExp.hpp>
+#include <kernel_lib/kernels/SquaredExp.hpp>
+
+#define EXPANSION utils::Expansion<ParamsEigenfunction, kernels::SquaredExp<ParamsEigenfunction>>
+#define RIEMANNSQUAREDEXP kernels::RiemannSqExp<ParamsKernel, EXPANSION>
+#define RIEMANNMATERN kernels::RiemannMatern<ParamsKernel, EXPANSION>
+
+#define KERNEL RIEMANNMATERN
 
 using namespace utils_lib;
 using namespace kernel_lib;
 
-struct ParamsExp {
+struct ParamsEigenfunction {
     struct kernel : public defaults::kernel {
         PARAM_SCALAR(double, sf, 0);
         PARAM_SCALAR(double, sn, -5);
@@ -42,7 +51,7 @@ struct ParamsExp {
     };
 };
 
-struct ParamsRiemann {
+struct ParamsKernel {
     struct kernel : public defaults::kernel {
         PARAM_SCALAR(double, sf, 0);
         PARAM_SCALAR(double, sn, -5);
@@ -50,6 +59,14 @@ struct ParamsRiemann {
 
     struct riemann_exp_sq : public defaults::riemann_exp_sq {
         PARAM_SCALAR(double, l, 1);
+    };
+
+    struct riemann_matern : public defaults::riemann_matern {
+        PARAM_SCALAR(double, l, 0);
+
+        PARAM_SCALAR(double, d, 2);
+
+        PARAM_SCALAR(double, nu, 1.5);
     };
 };
 
@@ -69,13 +86,10 @@ int main(int argc, char const* argv[])
     Eigen::MatrixXd U = mn.setFile("rsc/" + manifold + "_eigvec.csv").read<Eigen::MatrixXd>().transpose();
 
     // Kernel
-    using Kernel_t = kernels::SquaredExp<ParamsExp>;
-    using Expansion_t = utils::Expansion<ParamsExp, Kernel_t>;
-    using Riemann_t = kernels::RiemannSqExp<ParamsRiemann, Expansion_t>;
-    Riemann_t k;
+    KERNEL k;
 
     for (size_t i = 0; i < num_modes; i++) {
-        Expansion_t f; // Create eigenfunction
+        EXPANSION f; // Create eigenfunction
         f.setSamples(X).setWeights(U.col(i)); // Set manifold sampled points and weights
         k.addPair(D(i), f); // Add eigen-pair to Riemann kernel
     }
@@ -125,10 +139,10 @@ int main(int argc, char const* argv[])
             X_train.row(i) = torus_embed(Eigen::RowVector2d(x_distr(eng), y_distr(eng)));
     }
 
-    mn.setFile("output/riemann.csv")
+    mn.setFile("outputs/riemann.csv")
         .write("NODES", X, "CHART", X_chart, "EMBED", X_embed, "INDEX", I,
-            "SURF", k.gram(X_embed, Eigen::MatrixXd(X.row(2777))),
-            "MESH", k.gram(X, Eigen::MatrixXd(X.row(2777))),
+            "SURF", k.gram(X_embed, Eigen::MatrixXd(X.row(0))),
+            "MESH", k.gram(X, Eigen::MatrixXd(X.row(0))),
             "GRAM", k.gram(X_train, X_train));
 
     return 0;

@@ -139,11 +139,14 @@ namespace kernel_lib {
             }
 
         protected:
-            double _l;
+            RiemannSqExp(const double& l) : _l(l) {}
 
             // Lift signal and noise variance
             using AbstractKernel<Params, RiemannSqExp<Params, Function>>::_sf2;
             using AbstractKernel<Params, RiemannSqExp<Params, Function>>::_sn2;
+
+            // Length scale
+            double _l;
 
             // Eigenvalues and Spectral density
             Eigen::VectorXd _d, _s;

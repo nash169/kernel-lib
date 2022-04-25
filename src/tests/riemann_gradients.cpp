@@ -24,21 +24,22 @@
 
 #include <iostream>
 
-#include <kernel_lib/Kernel.hpp>
-
 #include <utils_lib/DerivativeChecker.hpp>
 #include <utils_lib/FileManager.hpp>
+
+#include <kernel_lib/kernels/RiemannMatern.hpp>
+#include <kernel_lib/kernels/RiemannSqExp.hpp>
+#include <kernel_lib/kernels/SquaredExp.hpp>
 
 using namespace utils_lib;
 using namespace kernel_lib;
 
 // Kernel
 #define EXPANSION utils::Expansion<ParamsEigenfunction, kernels::SquaredExp<ParamsEigenfunction>>
-
 #define RIEMANNSQUAREDEXP kernels::RiemannSqExp<ParamsKernel, EXPANSION>
 #define RIEMANNMATERN kernels::RiemannMatern<ParamsKernel, EXPANSION>
 
-#define KERNEL RIEMANNSQUAREDEXP
+#define KERNEL RIEMANNMATERN
 
 struct ParamsKernel {
 
@@ -49,6 +50,14 @@ struct ParamsKernel {
 
     struct riemann_exp_sq : public defaults::riemann_exp_sq {
         PARAM_SCALAR(double, l, 1);
+    };
+
+    struct riemann_matern : public defaults::riemann_matern {
+        PARAM_SCALAR(double, l, 1);
+
+        PARAM_SCALAR(double, d, 2);
+
+        PARAM_SCALAR(double, nu, 1.5);
     };
 };
 

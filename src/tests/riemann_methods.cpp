@@ -24,14 +24,16 @@
 
 #include <iostream>
 
-#include <kernel_lib/Kernel.hpp>
 #include <utils_lib/FileManager.hpp>
+
+#include <kernel_lib/kernels/RiemannMatern.hpp>
+#include <kernel_lib/kernels/RiemannSqExp.hpp>
+#include <kernel_lib/kernels/SquaredExp.hpp>
 
 using namespace kernel_lib;
 using namespace utils_lib;
 
 struct ParamsKernel {
-
     struct kernel : public defaults::kernel {
         PARAM_SCALAR(double, sf, 0.5);
         PARAM_SCALAR(double, sn, 1.4);
@@ -39,6 +41,14 @@ struct ParamsKernel {
 
     struct riemann_exp_sq : public defaults::riemann_exp_sq {
         PARAM_SCALAR(double, l, 1);
+    };
+
+    struct riemann_matern : public defaults::riemann_matern {
+        PARAM_SCALAR(double, l, 1);
+
+        PARAM_SCALAR(double, d, 2);
+
+        PARAM_SCALAR(double, nu, 1.5);
     };
 };
 
@@ -56,7 +66,8 @@ struct ParamsEigenfunction {
 // Kernel
 using Expansion_t = utils::Expansion<ParamsEigenfunction, kernels::SquaredExp<ParamsEigenfunction>>;
 #define RIEMANNSQUAREDEXP kernels::RiemannSqExp<ParamsKernel, Expansion_t>
-#define KERNEL RIEMANNSQUAREDEXP
+#define RIEMANNMATERN kernels::RiemannMatern<ParamsKernel, Expansion_t>
+#define KERNEL RIEMANNMATERN
 
 int main(int argc, char const* argv[])
 {
@@ -73,27 +84,19 @@ int main(int argc, char const* argv[])
     using Kernel_t = KERNEL;
     Kernel_t k;
 
-    // Parameters
-    Eigen::VectorXd params;
+    // Samples, eigenvalues and eigenvectors
+    Eigen::MatrixXd N = mn.setFile("rsc/nodes.csv").read<Eigen::MatrixXd>();
+    Eigen::VectorXd D = mn.setFile("rsc/eigval.csv").read<Eigen::MatrixXd>();
+    Eigen::MatrixXd U = mn.setFile("rsc/eigvec.csv").read<Eigen::MatrixXd>().transpose();
 
-    if constexpr (std::is_same_v<decltype(k), RIEMANNSQUAREDEXP>) {
-        std::cout << "Hello3" << std::endl;
-        // Samples on manifold
-        Eigen::MatrixXd X = mn.setFile("rsc/nodes.csv").read<Eigen::MatrixXd>();
-
-        // Eigenvalues and eigenvectors
-        Eigen::VectorXd D = mn.setFile("rsc/eigval.csv").read<Eigen::MatrixXd>();
-        Eigen::MatrixXd U = mn.setFile("rsc/eigvec.csv").read<Eigen::MatrixXd>().transpose();
-
-        for (size_t i = 0; i < 10; i++) {
-            utils::Expansion<ParamsEigenfunction, kernels::SquaredExp<ParamsEigenfunction>> f; // Create eigenfunction
-            f.setSamples(X).setWeights(U.col(i)); // Set manifold sampled points and weights
-            k.addPair(D(i), f); // Add eigen-pair to Riemann kernel
-        }
-
-        params.resize(3);
-        params << std::log(1.5), std::log(2.0), std::log(0.7);
+    for (size_t i = 0; i < 10; i++) {
+        utils::Expansion<ParamsEigenfunction, kernels::SquaredExp<ParamsEigenfunction>> f; // Create eigenfunction
+        f.setSamples(N).setWeights(U.col(i)); // Set manifold sampled points and weights
+        k.addPair(D(i), f); // Add eigen-pair to Riemann kernel
     }
+
+    Eigen::VectorXd params(3);
+    params << std::log(1.5), std::log(2.0), std::log(0.7);
 
     std::cout << "DEFAULT PARAMS" << std::endl;
     std::cout << k.sizeParams() << " - " << k.params().transpose() << std::endl;
