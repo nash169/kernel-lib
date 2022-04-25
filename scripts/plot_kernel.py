@@ -34,7 +34,7 @@ from utils import draw_mesh, get_data
 kernel = sys.argv[1] if len(sys.argv) > 1 else "euclidean"
 
 if kernel == 'euclidean':
-    data = get_data("rsc/kernel.csv", "X", "Y", "EVAL", "GRAM")
+    data = get_data("outputs/kernel.csv", "X", "Y", "EVAL", "GRAM")
     X = data["X"]
     Y = data["Y"]
     F = data["EVAL"].reshape(X.shape, order='F')
@@ -61,7 +61,7 @@ if kernel == 'euclidean':
     plt.show()
 
 elif kernel == 'riemann':
-    data = get_data("rsc/riemann.csv", "NODES",
+    data = get_data("outputs/riemann.csv", "NODES",
                     "CHART", "EMBED", "MESH", "GRAM", "INDEX", "SURF")
 
     Xc = data["CHART"][:, 0].reshape((100, 100), order='F')
@@ -93,6 +93,6 @@ elif kernel == 'riemann':
     K = data["GRAM"]
 
     x, y, z = (N[:, i] for i in range(3))
-    draw_mesh(x, y, z, I, F, 2777)
+    draw_mesh(x, y, z, I, F, 0)
 
     plt.show()
