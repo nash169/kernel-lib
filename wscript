@@ -47,7 +47,7 @@ def options(opt):
             tools[key], "share/waf"))
 
     # Load external tools options
-    opt.load("flags eigen", tooldir="waf_tools")
+    opt.load("flags eigen libtorch", tooldir="waf_tools")
 
     # Add options
     opt.add_option("--shared",
@@ -71,7 +71,14 @@ def configure(cfg):
     cfg.env.SUFFIX = "dylib" if cfg.env["DEST_OS"] == "darwin" else "so"
 
     # Load compiler configuration and generate clangd flags
-    cfg.load("compiler_cxx clang_compilation_database")
+    try:
+        # 'clang_compilation_database' required for clangd support (waf exe)
+        # Waf project has to compiled with the desired tools
+        # python3 ./waf-light configure build --tools=clang_compilation_database
+        cfg.load("compiler_cxx clang_compilation_database")
+    except:
+        # Standard waf tool for C++ compilation
+        cfg.load("compiler_cxx")
 
     # Define require libraries
     cfg.get_env()["requires"] += ["EIGEN", "CORRADE"]
@@ -82,7 +89,7 @@ def configure(cfg):
             tools[key], "share/waf"))
 
     # Load external tools configurations
-    cfg.load("flags eigen", tooldir="waf_tools")
+    cfg.load("flags eigen libtorch", tooldir="waf_tools")
 
     # Activate OPENMP if parellel option is active
     if cfg.options.multi_threading:
@@ -106,10 +113,10 @@ def build(bld):
     # Includes
     includes = []
     includes_path = "src"
-    for root, _, filenames in os.walk(
-            osp.join(bld.path.abspath(), includes_path)):
-        for filename in fnmatch.filter(filenames, "*.hpp"):
-            includes.append(os.path.join(root, filename))
+    for root, _, filenames in os.walk(osp.join(bld.path.abspath(), includes_path)):
+        for filename in filenames:
+            if filename.endswith(('.hpp', '.h')):
+                includes.append(os.path.join(root, filename))
     includes = [f[len(bld.path.abspath()) + 1:] for f in includes]
 
     # Sources
