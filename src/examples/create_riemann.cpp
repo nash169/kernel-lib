@@ -47,7 +47,7 @@ struct ParamsEigenfunction {
     };
 
     struct exp_sq : public defaults::exp_sq {
-        PARAM_SCALAR(double, l, -4.6052); // -4.6052 -2.99573 -2.30259 -0.6931 (0.01 0.05 0.1 0.5)
+        PARAM_SCALAR(double, l, -0.6931); // -4.6052 -2.99573 -2.30259 -0.6931 (0.01 0.05 0.1 0.5)
     };
 };
 
@@ -58,11 +58,11 @@ struct ParamsKernel {
     };
 
     struct riemann_exp_sq : public defaults::riemann_exp_sq {
-        PARAM_SCALAR(double, l, 1);
+        PARAM_SCALAR(double, l, 0);
     };
 
     struct riemann_matern : public defaults::riemann_matern {
-        PARAM_SCALAR(double, l, 0);
+        PARAM_SCALAR(double, l, -0.6931);
 
         PARAM_SCALAR(double, d, 2);
 
@@ -72,7 +72,7 @@ struct ParamsKernel {
 
 int main(int argc, char const* argv[])
 {
-    std::string manifold = "torus";
+    std::string manifold = "sphere";
     int num_modes = 100;
 
     FileManager mn;
@@ -143,7 +143,8 @@ int main(int argc, char const* argv[])
         .write("NODES", X, "CHART", X_chart, "EMBED", X_embed, "INDEX", I,
             "SURF", k.gram(X_embed, Eigen::MatrixXd(X.row(0))),
             "MESH", k.gram(X, Eigen::MatrixXd(X.row(0))),
-            "GRAM", k.gram(X_train, X_train));
+            "GRAM", k.gram(X_train, X_train),
+            "GRADIENT", k.gramGrad(X_embed, Eigen::MatrixXd(X.row(0))));
 
     return 0;
 }
