@@ -64,20 +64,7 @@ namespace kernel_lib {
             template <typename Derived>
             EIGEN_ALWAYS_INLINE auto hessian(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 3) const
             {
-                Eigen::MatrixXd h(x.size(), x.size());
-
-                if (i == 0 || i == 3) {
-                    h = (x - y) * (x - y).transpose() / std::pow(_l, 4);
-                    h.diagonal().array() -= 1 / std::pow(_l, 2);
-                }
-                else {
-                    h = (y - x) * (x - y).transpose() / std::pow(_l, 4);
-                    h.diagonal().array() += 1 / std::pow(_l, 2);
-                }
-
-                h *= kernel(x, y);
-
-                return h;
+                return ((x - y) * (x - y).transpose() / std::pow(_l, 4) - Eigen::MatrixXd::Identity(x.size(), x.size()) / std::pow(_l, 2)) * ((i == 0 || i == 3) ? kernel(x, y) : -kernel(x, y));
             }
 
             template <typename Derived>
