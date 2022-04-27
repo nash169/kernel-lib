@@ -71,6 +71,25 @@ namespace kernel_lib {
             }
 
             template <typename Derived>
+            EIGEN_ALWAYS_INLINE auto hessian(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 0) const
+            {
+                Eigen::MatrixXd h = Eigen::MatrixXd::Zero(x.rows(), x.rows());
+
+                for (size_t k = 0; k < _d.rows(); k++) {
+                    if (i == 0)
+                        h += _s(k) * _f[k].template hess<SIZE>(x) * _f[k].template operator()<SIZE>(y);
+                    else if (i == 1)
+                        h += _s(k) * _f[k].template grad<SIZE>(x) * _f[k].template grad<SIZE>(y).transpose();
+                    else if (i == 2)
+                        h += _s(k) * _f[k].template grad<SIZE>(y) * _f[k].template grad<SIZE>(x).transpose();
+                    else if (i == 3)
+                        h += _s(k) * _f[k].template operator()<SIZE>(x) * _f[k].template hess<SIZE>(y);
+                }
+
+                return h;
+            }
+
+            template <typename Derived>
             EIGEN_ALWAYS_INLINE double gradientParams(const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& y, const size_t& i = 1) const
             {
                 double g = 0;

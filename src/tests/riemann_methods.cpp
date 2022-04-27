@@ -29,6 +29,14 @@
 #include <kernel_lib/kernels/RiemannMatern.hpp>
 #include <kernel_lib/kernels/RiemannSqExp.hpp>
 #include <kernel_lib/kernels/SquaredExp.hpp>
+#include <kernel_lib/utils/Expansion.hpp>
+
+// Kernel
+#define EXPANSION utils::Expansion<ParamsEigenfunction, kernels::SquaredExp<ParamsEigenfunction>>
+#define RIEMANNSQUAREDEXP kernels::RiemannSqExp<ParamsKernel, EXPANSION>
+#define RIEMANNMATERN kernels::RiemannMatern<ParamsKernel, EXPANSION>
+
+#define KERNEL RIEMANNMATERN
 
 using namespace kernel_lib;
 using namespace utils_lib;
@@ -63,12 +71,6 @@ struct ParamsEigenfunction {
     };
 };
 
-// Kernel
-using Expansion_t = utils::Expansion<ParamsEigenfunction, kernels::SquaredExp<ParamsEigenfunction>>;
-#define RIEMANNSQUAREDEXP kernels::RiemannSqExp<ParamsKernel, Expansion_t>
-#define RIEMANNMATERN kernels::RiemannMatern<ParamsKernel, Expansion_t>
-#define KERNEL RIEMANNMATERN
-
 int main(int argc, char const* argv[])
 {
     // Data
@@ -90,7 +92,7 @@ int main(int argc, char const* argv[])
     Eigen::MatrixXd U = mn.setFile("rsc/eigvec.csv").read<Eigen::MatrixXd>().transpose();
 
     for (size_t i = 0; i < 10; i++) {
-        utils::Expansion<ParamsEigenfunction, kernels::SquaredExp<ParamsEigenfunction>> f; // Create eigenfunction
+        EXPANSION f; // Create eigenfunction
         f.setSamples(N).setWeights(U.col(i)); // Set manifold sampled points and weights
         k.addPair(D(i), f); // Add eigen-pair to Riemann kernel
     }
@@ -124,18 +126,18 @@ int main(int argc, char const* argv[])
     std::cout << "GRADIENT XX" << std::endl;
     std::cout << k.gramGrad(X, X) << std::endl;
 
-    // std::cout << "HESSIAN SINGLE POINTS xy, Xy, XX" << std::endl;
-    // std::cout << k.hess(x, y) << std::endl;
-    // std::cout << " - " << std::endl;
-    // std::cout << k.hess(X.row(0), y) << std::endl;
-    // std::cout << " - " << std::endl;
-    // std::cout << k.hess(X.row(0), X.row(0)) << std::endl;
+    std::cout << "HESSIAN SINGLE POINTS xy, Xy, XX" << std::endl;
+    std::cout << k.hess(x, y) << std::endl;
+    std::cout << " - " << std::endl;
+    std::cout << k.hess(X.row(0), y) << std::endl;
+    std::cout << " - " << std::endl;
+    std::cout << k.hess(X.row(0), X.row(0)) << std::endl;
 
-    // std::cout << "HESSIAN XY" << std::endl;
-    // std::cout << k.gramHess(X, Y) << std::endl;
+    std::cout << "HESSIAN XY" << std::endl;
+    std::cout << k.gramHess(X, Y) << std::endl;
 
-    // std::cout << "HESSIAN XX" << std::endl;
-    // std::cout << k.gramHess(X, X) << std::endl;
+    std::cout << "HESSIAN XX" << std::endl;
+    std::cout << k.gramHess(X, X) << std::endl;
 
     std::cout << "GRADIENT PARAMS SINGLE POINTS xy, Xy, XX" << std::endl;
     std::cout << k.gradParams(x, y).transpose() << " - " << k.gradParams(X.row(0), y).transpose() << " - " << k.gradParams(X.row(0), X.row(0)).transpose() << std::endl;

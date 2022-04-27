@@ -144,6 +144,78 @@ struct GradientY {
     KERNEL& _k;
 };
 
+/* TOTAL KERNEL: Hessian in X */
+template <int size>
+struct HessianXX {
+    HessianXX(KERNEL& k) : _k(k)
+    {
+        _x.setOnes();
+        _x.normalized();
+    }
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& v) const
+    {
+        return _k.hess(x, _x, 0) * v;
+    }
+
+    Eigen::Matrix<double, size, 1> _x;
+    KERNEL& _k;
+};
+
+/* TOTAL KERNEL: Hessian in XY */
+template <int size>
+struct HessianXY {
+    HessianXY(KERNEL& k) : _k(k)
+    {
+        _x.setOnes();
+        _x.normalized();
+    }
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& v) const
+    {
+        return _k.hess(_x, x, 1) * v;
+    }
+
+    Eigen::Matrix<double, size, 1> _x;
+    KERNEL& _k;
+};
+
+/* TOTAL KERNEL: Hessian in YX */
+template <int size>
+struct HessianYX {
+    HessianYX(KERNEL& k) : _k(k)
+    {
+        _x.setOnes();
+        _x.normalized();
+    }
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& v) const
+    {
+        return _k.hess(x, _x, 2) * v;
+    }
+
+    Eigen::Matrix<double, size, 1> _x;
+    KERNEL& _k;
+};
+
+/* TOTAL KERNEL: Hessian in YY */
+template <int size>
+struct HessianYY {
+    HessianYY(KERNEL& k) : _k(k)
+    {
+        _x.setOnes();
+        _x.normalized();
+    }
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& v) const
+    {
+        return _k.hess(_x, x, 3) * v;
+    }
+
+    Eigen::Matrix<double, size, 1> _x;
+    KERNEL& _k;
+};
+
 /* TOTAL KERNEL: Function in PARAMS */
 template <int size>
 struct FunctionParamsT {
@@ -207,6 +279,8 @@ int main(int argc, char const* argv[])
 
     Eigen::VectorXd x = Eigen::VectorXd::Random(dim);
     x.normalized();
+    Eigen::VectorXd v = Eigen::VectorXd::Random(dim);
+    v = (Eigen::MatrixXd::Identity(x.rows(), x.rows()) - x * x.transpose()) * v;
 
     Eigen::VectorXd params_t = Eigen::VectorXd::Random(k.sizeParams()),
                     params_s = Eigen::VectorXd::Random(k.sizeParams() - 2);
@@ -227,6 +301,22 @@ int main(int argc, char const* argv[])
     GradientY<dim> gy(k);
     std::cout << gy(x).transpose() << std::endl;
 
+    std::cout << "TOTAL KERNEL: Hessian in XX test" << std::endl;
+    HessianXX<dim> hxx(k);
+    std::cout << hxx(x, v).transpose() << std::endl;
+
+    std::cout << "TOTAL KERNEL: Hessian in XY test" << std::endl;
+    HessianXY<dim> hxy(k);
+    std::cout << hxy(x, v).transpose() << std::endl;
+
+    std::cout << "TOTAL KERNEL: Hessian in YX test" << std::endl;
+    HessianYX<dim> hyx(k);
+    std::cout << hyx(x, v).transpose() << std::endl;
+
+    std::cout << "TOTAL KERNEL: Hessian in YY test" << std::endl;
+    HessianYY<dim> hyy(k);
+    std::cout << hyy(x, v).transpose() << std::endl;
+
     std::cout << "TOTAL KERNEL: Function in PARAMS" << std::endl;
     FunctionParamsT<dim> fpt(k);
     std::cout << fpt(params_t) << std::endl;
@@ -246,6 +336,16 @@ int main(int argc, char const* argv[])
         std::cout << "The Y gradient is CORRECT!" << std::endl;
     else
         std::cout << "The Y gradient is NOT correct!" << std::endl;
+
+    if (checker.checkHessian(fx, gx, hxx))
+        std::cout << "The XX hessian is CORRECT!" << std::endl;
+    else
+        std::cout << "The XX hessian is NOT correct!" << std::endl;
+
+    if (checker.checkHessian(fy, gy, hyy))
+        std::cout << "The YY hessian is CORRECT!" << std::endl;
+    else
+        std::cout << "The YY hessian is NOT correct!" << std::endl;
 
     if (checker.setDimension(k.sizeParams()).checkGradient(fpt, gpt))
         std::cout << "TOTAL KERNEL: PARAMS gradient is CORRECT!" << std::endl;

@@ -54,83 +54,32 @@ struct Params {
     };
 };
 
-/* EXPANSION: Function in X */
-template <int size>
-struct Function {
-    Function(EXPANSION& f) : _f(f) {}
-
-    double operator()(const Eigen::Matrix<double, size, 1>& x) const
-    {
-        return _f(x);
-    }
-
-    EXPANSION& _f;
-};
-
-/* EXPANSION: Gradient in X */
-template <int size>
-struct Gradient {
-    Gradient(EXPANSION& f) : _f(f) {}
-
-    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x) const
-    {
-        return _f.grad(x);
-    }
-
-    EXPANSION& _f;
-};
-
-// /* EXPANSION: Function (log) in PARAMS */
-// template <int size>
-// struct FunctionParams : public EXPANSION {
-//     Eigen::Matrix<double, size, 1> x = Eigen::VectorXd::Zero(size);
-
-//     double operator()(const Eigen::VectorXd& params)
-//     {
-//         EXPANSION::setParams(params);
-
-//         return EXPANSION::log(x);
-//     }
-// };
-
-// /* EXPANSION: Gradient in PARAMS */
-// template <int size>
-// struct GradientParams : public EXPANSION {
-//     Eigen::Matrix<double, size, 1> x = Eigen::VectorXd::Zero(size);
-
-//     Eigen::VectorXd operator()(const Eigen::VectorXd& params)
-//     {
-//         EXPANSION::setParams(params);
-
-//         return EXPANSION::gradParams(x);
-//     }
-// };
-
 int main(int argc, char const* argv[])
 {
     // Data
     FileManager mn;
     Eigen::MatrixXd X = mn.setFile("rsc/y_samples.csv").read<Eigen::MatrixXd>();
     Eigen::VectorXd w = Eigen::VectorXd::Random(X.rows()),
-                    x = Eigen::VectorXd::Random(3);
+                    x = Eigen::VectorXd::Random(3), v = Eigen::VectorXd::Random(3);
 
     constexpr int dim = 3;
     EXPANSION psi;
     psi.setSamples(X).setWeights(w);
 
     std::cout << "EXPANSION: Function in test" << std::endl;
-    Function<dim> f(psi);
+    auto f = std::bind(&EXPANSION::operator()<dim>, &psi, std::placeholders::_1);
     std::cout << f(x) << std::endl;
 
     std::cout << "EXPANSION: Gradient in test" << std::endl;
-    Gradient<dim> g(psi);
+    auto g = std::bind(&EXPANSION::grad<dim>, &psi, std::placeholders::_1);
     std::cout << g(x).transpose() << std::endl;
 
-    // std::cout << "EXPANSION: Function (log) in PARAMS" << std::endl;
-    // std::cout << FunctionLogParams<dim>()(params) << std::endl;
-
-    // std::cout << "EXPANSION: Gradient (log) in PARAMS" << std::endl;
-    // std::cout << GradientLogParams<dim>()(params).transpose() << std::endl;
+    std::cout << "EXPANSION: Hessian in test" << std::endl;
+    auto h = std::bind(&EXPANSION::hess<dim>, &psi, std::placeholders::_1);
+    auto hv = [&h](const Eigen::Matrix<double, dim, 1>& x, const Eigen::Matrix<double, dim, 1>& v) {
+        return h(x) * v;
+    };
+    std::cout << hv(x, v).transpose() << std::endl;
 
     DerivativeChecker checker(dim);
 
@@ -139,10 +88,10 @@ int main(int argc, char const* argv[])
     else
         std::cout << "EXPANSION: The gradient is NOT correct!" << std::endl;
 
-    // if (checker.setDimension(psi.sizeParams()).checkGradient(FunctionLogParams<dim>(), GradientLogParams<dim>()))
-    //     std::cout << "EXPANSION: PARAMS gradient is CORRECT!" << std::endl;
-    // else
-    //     std::cout << "EXPANSION: PARAMS gradient is NOT correct!" << std::endl;
+    if (checker.checkHessian(f, g, hv))
+        std::cout << "EXPANSION: The hessian is CORRECT!" << std::endl;
+    else
+        std::cout << "EXPANSION: The hessian is NOT correct!" << std::endl;
 
     return 0;
 }

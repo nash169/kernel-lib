@@ -24,14 +24,17 @@
 
 #include <iostream>
 
-#include <kernel_lib/Kernel.hpp>
-
 #include <utils_lib/DerivativeChecker.hpp>
+
+#include <kernel_lib/kernels/SquaredExp.hpp>
+#include <kernel_lib/kernels/SquaredExpFull.hpp>
+
+#define SQUAREDEXP kernels::SquaredExp<Params>
+#define SQUAREDEXPFULL kernels::SquaredExpFull<Params>
+#define KERNEL SQUAREDEXP
 
 using namespace utils_lib;
 using namespace kernel_lib;
-
-#define KERNEL kernels::SquaredExpFull<Params>
 
 struct Params {
     struct kernel : public defaults::kernel {
@@ -89,6 +92,50 @@ struct GradientY : public KERNEL {
     Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& y) const
     {
         return KERNEL::grad(x, y, 0);
+    }
+};
+
+/* TOTAL KERNEL: Hessian in X */
+template <int size>
+struct HessianXX : public KERNEL {
+    Eigen::Matrix<double, size, 1> y = Eigen::VectorXd::Zero(size);
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& v) const
+    {
+        return KERNEL::hess(x, y, 0) * v;
+    }
+};
+
+/* TOTAL KERNEL: Hessian in XY */
+template <int size>
+struct HessianXY : public KERNEL {
+    Eigen::Matrix<double, size, 1> x = Eigen::VectorXd::Zero(size);
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& y, const Eigen::Matrix<double, size, 1>& v) const
+    {
+        return KERNEL::hess(x, y, 1) * v;
+    }
+};
+
+/* TOTAL KERNEL: Hessian in YX */
+template <int size>
+struct HessianYX : public KERNEL {
+    Eigen::Matrix<double, size, 1> y = Eigen::VectorXd::Zero(size);
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& x, const Eigen::Matrix<double, size, 1>& v) const
+    {
+        return KERNEL::hess(x, y, 2) * v;
+    }
+};
+
+/* TOTAL KERNEL: Hessian in YY */
+template <int size>
+struct HessianYY : public KERNEL {
+    Eigen::Matrix<double, size, 1> x = Eigen::VectorXd::Zero(size);
+
+    Eigen::Matrix<double, size, 1> operator()(const Eigen::Matrix<double, size, 1>& y, const Eigen::Matrix<double, size, 1>& v) const
+    {
+        return KERNEL::hess(x, y, 3) * v;
     }
 };
 
@@ -158,7 +205,7 @@ int main(int argc, char const* argv[])
 
     constexpr int dim = 2;
 
-    Eigen::VectorXd x = Eigen::VectorXd::Random(dim),
+    Eigen::VectorXd x = Eigen::VectorXd::Random(dim), v = Eigen::VectorXd::Random(dim),
                     params_t = Eigen::VectorXd::Random(k.sizeParams()),
                     params_s = Eigen::VectorXd::Random(k.sizeParams() - 2);
 
@@ -173,6 +220,18 @@ int main(int argc, char const* argv[])
 
     std::cout << "TOTAL KERNEL: Gradient in Y test" << std::endl;
     std::cout << GradientY<dim>()(x).transpose() << std::endl;
+
+    std::cout << "TOTAL KERNEL: Hessian in XX test" << std::endl;
+    std::cout << HessianXX<dim>()(x, v).transpose() << std::endl;
+
+    std::cout << "TOTAL KERNEL: Hessian in XY test" << std::endl;
+    std::cout << HessianXY<dim>()(x, v).transpose() << std::endl;
+
+    std::cout << "TOTAL KERNEL: Hessian in YX test" << std::endl;
+    std::cout << HessianYX<dim>()(x, v).transpose() << std::endl;
+
+    std::cout << "TOTAL KERNEL: Hessian in YY test" << std::endl;
+    std::cout << HessianYY<dim>()(x, v).transpose() << std::endl;
 
     std::cout << "TOTAL KERNEL: Function in PARAMS" << std::endl;
     std::cout << FunctionParamsT<dim>()(params_t) << std::endl;
@@ -197,6 +256,16 @@ int main(int argc, char const* argv[])
         std::cout << "The Y gradient is CORRECT!" << std::endl;
     else
         std::cout << "The Y gradient is NOT correct!" << std::endl;
+
+    if (checker.checkHessian(FunctionX<dim>(), GradientX<dim>(), HessianXX<dim>()))
+        std::cout << "The XX hessian is CORRECT!" << std::endl;
+    else
+        std::cout << "The XX hessian is NOT correct!" << std::endl;
+
+    if (checker.checkHessian(FunctionY<dim>(), GradientY<dim>(), HessianYY<dim>()))
+        std::cout << "The YY hessian is CORRECT!" << std::endl;
+    else
+        std::cout << "The YY hessian is NOT correct!" << std::endl;
 
     if constexpr (std::is_same_v<decltype(k), kernels::SquaredExpFull<Params>>) {
         // Generate symmetric matrices for the full squared exponential kernel
