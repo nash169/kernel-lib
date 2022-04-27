@@ -105,6 +105,9 @@ def configure(cfg):
     else:
         cfg.env["lib_type"] = "cxxstlib"
 
+    # Save configuration
+    cfg.env.store("build/kernellib_config.py")
+
 
 def build(bld):
     # Library name
@@ -168,6 +171,9 @@ def build(bld):
             blddir + "/lib" + bld.get_env()["libname"] + "." + bld.env.SUFFIX,
         )
 
-    # Install tools
+    # Install waf tools
     bld.install_files("${PREFIX}/share/waf", "scripts/kernellib.py")
-    bld.install_files("${PREFIX}/share/waf", "waf_tools/utils.py")
+
+    # Install configuration file
+    bld.install_files(
+        "${PREFIX}/share/waf/", "build/kernellib_config.py")
