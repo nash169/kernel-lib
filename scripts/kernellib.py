@@ -23,8 +23,9 @@
 #    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #    SOFTWARE.
 
+from importlib_metadata import requires
 from waflib.Configure import conf
-from utils import check_include, check_lib
+from utils import check_include, check_lib, check_config
 
 
 def options(opt):
@@ -51,6 +52,9 @@ def check_kernellib(ctx):
 
     # kernel-lib libs
     check_lib(ctx, "KERNELLIB", "", ["libKernel"], path_check)
+
+    # Check configuration
+    check_config(ctx, "", "kernellib_config.py", path_check)
 
     if ctx.env.LIB_KERNELLIB or ctx.env.STLIB_KERNELLIB:
         # Add dependencies to require libraries
