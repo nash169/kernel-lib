@@ -24,13 +24,19 @@
 
 #include <iostream>
 
-#include <kernel_lib/Kernel.hpp>
 #include <utils_lib/FileManager.hpp>
+
+#include <kernel_lib/kernels/SquaredExp.hpp>
+#include <kernel_lib/kernels/SquaredExpFull.hpp>
+
+#define SQUAREDEXP kernels::SquaredExp<Params>
+#define SQUAREDEXPFULL kernels::SquaredExpFull<Params>
+#define KERNEL SQUAREDEXP
 
 using namespace kernel_lib;
 using namespace utils_lib;
 
-struct ParamsKernel {
+struct Params {
 
     struct kernel : public defaults::kernel {
         PARAM_SCALAR(double, sf, 0.5);
@@ -45,10 +51,6 @@ struct ParamsKernel {
         PARAM_VECTOR(double, S, 1, 0.5, 0.5, 1);
     };
 };
-
-#define SQUAREDEXP kernels::SquaredExp<ParamsKernel>
-#define SQUAREDEXPFULL kernels::SquaredExpFull<ParamsKernel>
-#define KERNEL SQUAREDEXP
 
 int main(int argc, char const* argv[])
 {
