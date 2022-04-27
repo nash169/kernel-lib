@@ -23,10 +23,12 @@
 #    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #    SOFTWARE.
 
+from unittest import skip
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+from scipy.linalg import norm
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from utils import draw_mesh, get_data
@@ -61,17 +63,23 @@ if kernel == 'euclidean':
     plt.show()
 
 elif kernel == 'riemann':
+    res = 100
     data = get_data("outputs/riemann.csv", "NODES",
-                    "CHART", "EMBED", "MESH", "GRAM", "INDEX", "SURF")
+                    "CHART", "EMBED", "MESH", "GRAM", "INDEX", "SURF", "GRADIENT")
 
-    Xc = data["CHART"][:, 0].reshape((100, 100), order='F')
-    Yc = data["CHART"][:, 1].reshape((100, 100), order='F')
+    Xc = data["CHART"][:, 0].reshape((res, res), order='F')
+    Yc = data["CHART"][:, 1].reshape((res, res), order='F')
 
-    Xe = data["EMBED"][:, 0].reshape((100, 100), order='F')
-    Ye = data["EMBED"][:, 1].reshape((100, 100), order='F')
-    Ze = data["EMBED"][:, 2].reshape((100, 100), order='F')
+    Xe = data["EMBED"][:, 0].reshape((res, res), order='F')
+    Ye = data["EMBED"][:, 1].reshape((res, res), order='F')
+    Ze = data["EMBED"][:, 2].reshape((res, res), order='F')
 
-    Fs = data["SURF"].reshape((100, 100), order='F')
+    Fs = data["SURF"].reshape((res, res), order='F')
+    data["GRADIENT"] = np.divide(data["GRADIENT"], norm(
+        data["GRADIENT"], axis=1)[:, np.newaxis])
+    GsX = data["GRADIENT"][:, 0].reshape((res, res), order='F')
+    GsY = data["GRADIENT"][:, 1].reshape((res, res), order='F')
+    GsZ = data["GRADIENT"][:, 2].reshape((res, res), order='F')
 
     fig_1 = plt.figure()
     ax = fig_1.add_subplot(111, projection="3d")
@@ -84,6 +92,11 @@ elif kernel == 'riemann':
     surf = ax.plot_surface(Xe, Ye, Ze, facecolors=cm.jet(
         Fs/np.amax(Fs)), antialiased=True, linewidth=0)
     fig_2.colorbar(surf, ax=ax)
+    ax.set_box_aspect((np.ptp(Xe), np.ptp(Ye), np.ptp(Ze)))
+
+    fig_3 = plt.figure()
+    ax = fig_3.add_subplot(111, projection="3d")
+    ax.quiver(Xe, Ye, Ze, GsX, GsY, GsZ, length=0.1)
     ax.set_box_aspect((np.ptp(Xe), np.ptp(Ye), np.ptp(Ze)))
 
     N = data["NODES"]
