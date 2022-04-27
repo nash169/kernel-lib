@@ -25,6 +25,8 @@
 #ifndef KERNELLIB_KERNELS_RIEMANNSQEXP_HPP
 #define KERNELLIB_KERNELS_RIEMANNSQEXP_HPP
 
+#include <vector>
+
 #include "kernel_lib/kernels/AbstractKernel.hpp"
 #include "kernel_lib/tools/macros.hpp"
 #include "kernel_lib/tools/math.hpp"
