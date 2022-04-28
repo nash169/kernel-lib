@@ -77,6 +77,13 @@ namespace kernel_lib {
             {
                 Eigen::MatrixXd h = Eigen::MatrixXd::Zero(x.rows(), x.rows());
 
+                // #pragma omp declare reduction(+                             \
+//                               : Eigen::MatrixXd             \
+//                               : omp_out = omp_out + omp_in) \
+//     initializer(omp_priv = Eigen::MatrixXd::Zero(omp_orig.rows(), omp_orig.cols()))
+
+                // #pragma omp parallel for reduction(+ \
+//                                    : h)
                 for (size_t k = 0; k < _d.rows(); k++) {
                     if (i == 0)
                         h += _s(k) * _f[k].template hess<SIZE>(x) * _f[k].template operator()<SIZE>(y);

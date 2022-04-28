@@ -55,6 +55,9 @@ namespace kernel_lib {
                 // https://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-data.html
                 // https://stackoverflow.com/questions/11773115/parallel-for-loop-in-openmp
                 // https://stackoverflow.com/questions/40495250/openmp-reduction-with-eigenvectorxd
+
+                // #pragma omp parallel for reduction(+ \
+//                                    : r)
                 for (size_t i = 0; i < _x.rows(); i++)
                     r += _w(i) * _k.template kernelImpl<Size>(_x.row(i), x);
 
