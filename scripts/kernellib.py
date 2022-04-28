@@ -36,6 +36,10 @@ def options(opt):
     opt.add_option(
         "--kernellib-path", type="string", help="path to kernel-lib", dest="kernellib_path"
     )
+    # Load configuration file
+    opt.add_option(
+        "--kernellib-config", action="store_true", help="load kernel-lib configuration", dest="kernellib_config"
+    )
 
 
 @conf
@@ -54,7 +58,8 @@ def check_kernellib(ctx):
     check_lib(ctx, "KERNELLIB", "", ["libKernel"], path_check)
 
     # Check configuration
-    check_config(ctx, "", "kernellib_config.py", path_check)
+    if ctx.options.kernellib_config:
+        check_config(ctx, "", "kernellib_config.py", path_check)
 
     if ctx.env.LIB_KERNELLIB or ctx.env.STLIB_KERNELLIB:
         # Add dependencies to require libraries
