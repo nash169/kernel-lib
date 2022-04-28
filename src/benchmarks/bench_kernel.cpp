@@ -59,7 +59,7 @@ int main(int argc, char const* argv[])
     std::cout << "BENCHMARK GRAM" << std::endl;
     {
         Timer timer;
-        k.gram<dim>(X, Y);
+        k.gram(X, Y);
     }
 
     return 0;

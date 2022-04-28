@@ -36,7 +36,7 @@
 #define RIEMANNSQUAREDEXP kernels::RiemannSqExp<ParamsKernel, EXPANSION>
 #define RIEMANNMATERN kernels::RiemannMatern<ParamsKernel, EXPANSION>
 
-#define KERNEL RIEMANNMATERN
+#define KERNEL RIEMANNSQUAREDEXP
 
 using namespace utils_lib;
 using namespace kernel_lib;
@@ -73,10 +73,11 @@ struct ParamsEigenfunction {
 
 int main(int argc, char const* argv[])
 {
-    constexpr int dim = 3, num_samples = 100, num_nodes = 100, num_modes = 10;
+    constexpr int dim = 3, num_samples = 100, num_nodes = 2000, num_modes = 100;
 
     // Data
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_samples, dim), Y = Eigen::MatrixXd::Random(num_samples, dim);
+    Eigen::VectorXd x = Eigen::VectorXd::Random(dim), y = Eigen::VectorXd::Random(dim);
 
     // Nodes, eigenvalues and eigenvectors
     Eigen::MatrixXd N = Eigen::MatrixXd::Random(num_nodes, dim);
@@ -91,10 +92,10 @@ int main(int argc, char const* argv[])
         k.addPair(D(i), f); // Add eigen-pair to Riemann kernel
     }
 
-    std::cout << "BENCHMARK GRAM" << std::endl;
+    std::cout << "BENCHMARK" << std::endl;
     {
         Timer timer;
-        k.gram<dim>(X, Y);
+        k.hess(x, y);
     }
 
     return 0;

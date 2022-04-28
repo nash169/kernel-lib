@@ -45,11 +45,12 @@ struct Params {
 
 int main(int argc, char const* argv[])
 {
-    constexpr int dim = 2, num_samples = 20000, num_nodes = 100;
+    constexpr int dim = 3, num_samples = 20000, num_nodes = 1000;
 
     Eigen::MatrixXd X = Eigen::MatrixXd::Random(num_samples, dim),
                     N = Eigen::MatrixXd::Random(num_nodes, dim);
-    Eigen::VectorXd W = Eigen::VectorXd::Random(num_nodes);
+    Eigen::VectorXd x = Eigen::VectorXd::Random(dim),
+                    W = Eigen::VectorXd::Random(num_nodes);
 
     using Kernel_t = kernels::SquaredExp<Params>;
     using Expansion_t = utils::Expansion<Params, Kernel_t>;
@@ -59,7 +60,7 @@ int main(int argc, char const* argv[])
     std::cout << "BENCHMARK EXPANSION" << std::endl;
     {
         Timer timer;
-        psi.multiEval(X);
+        psi(x);
     }
 
     return 0;
