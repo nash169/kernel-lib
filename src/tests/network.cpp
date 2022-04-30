@@ -28,6 +28,14 @@ struct Net : torch::nn::Module {
 
 int main()
 {
+    torch::Device device(torch::kCPU);
+
+    std::cout << torch::cuda::is_available() << std::endl;
+    if (torch::cuda::is_available()) {
+        std::cout << "CUDA is available! Training on GPU." << std::endl;
+        device = torch::Device(torch::kCUDA);
+    }
+
     // Create a new Net.
     auto net = std::make_shared<Net>();
 
