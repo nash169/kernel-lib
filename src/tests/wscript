@@ -39,7 +39,16 @@ def build(bld):
     sources = [f[len(bld.path.abspath()) + 1:] for f in sources]
 
     # External required libraries for the tests
-    test_required = {}
+    test_required = {
+        "expansion_gradients.cpp": ["UTILSLIB"],
+        "expansion_methods.cpp": ["UTILSLIB"],
+        "gaussian_gradients.cpp": ["UTILSLIB"],
+        "gaussian_methods.cpp": ["UTILSLIB"],
+        "kernel_gradients.cpp": ["UTILSLIB"],
+        "riemann_gradients.cpp": ["UTILSLIB"],
+        "riemann_methods.cpp": ["UTILSLIB"],
+        "kernel_methods.cpp": ["UTILSLIB"],
+    }
 
     # External optional libraries for the tests
     test_optional = {}

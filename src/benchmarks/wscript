@@ -39,7 +39,9 @@ def build(bld):
     sources = [f[len(bld.path.abspath()) + 1:] for f in sources]
 
     # External required libraries for the benchmarks
-    benchmark_required = {"bench_rbf.cpp": ["UTILSCPP"]}
+    benchmark_required = {"bench_kernel.cpp": ["UTILSLIB"],
+                          "bench_expansion.cpp": ["UTILSLIB"],
+                          "bench_riemann.cpp": ["UTILSLIB"]}
 
     # External optional libraries for the benchmarks
     benchmark_optional = {}

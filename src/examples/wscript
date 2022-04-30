@@ -39,8 +39,11 @@ def build(bld):
     sources = [f[len(bld.path.abspath()) + 1:] for f in sources]
 
     # External required libraries for the examples
-    example_required = {"create_kernels.cpp": ["UTILSCPP"],
-                        "eigenfun_kernels.cpp": ["UTILSCPP"]}
+    example_required = {"create_kernel.cpp": ["UTILSLIB"],
+                        "eigenfun_kernels.cpp": ["UTILSLIB"],
+                        "create_riemann.cpp": ["UTILSLIB"],
+                        "create_gaussian.cpp": ["UTILSLIB"],
+                        "create_expansion.cpp": ["UTILSLIB"]}
 
     # External optional libraries for the examples
     example_optional = {}
