@@ -43,8 +43,9 @@ def options(opt):
 
     # Load personal tools options
     for key in tools:
-        opt.load(key, tooldir=os.path.join(
-            tools[key], "share/waf"))
+        if tools[key]:
+            opt.load(key, tooldir=os.path.join(
+                tools[key], "share/waf"))
 
     # Load external tools options
     opt.load("flags eigen libtorch", tooldir="waf_tools")
@@ -59,10 +60,10 @@ def options(opt):
                    help="build static library")
 
     opt.add_option(
-        "--multi-threading",
+        "--parallel",
         action="store_true",
         help="enable multi-threading",
-        dest="multi_threading",
+        dest="parallel",
     )
 
 
@@ -81,18 +82,19 @@ def configure(cfg):
         cfg.load("compiler_cxx")
 
     # Define require libraries
-    cfg.get_env()["requires"] += ["EIGEN", "CORRADE"]
+    cfg.get_env()["requires"] += ["EIGEN"]
 
     # Load personal tools configurations
     for key in tools:
-        cfg.load(key, tooldir=os.path.join(
-            tools[key], "share/waf"))
+        if tools[key]:
+            cfg.load(key, tooldir=os.path.join(
+                tools[key], "share/waf"))
 
     # Load external tools configurations
     cfg.load("flags eigen libtorch", tooldir="waf_tools")
 
     # Activate OPENMP if parellel option is active
-    if cfg.options.multi_threading:
+    if cfg.options.parallel:
         cfg.load("openmp", tooldir="waf_tools")
         cfg.env["DEFINES"] += ["PARALLEL"]
 
