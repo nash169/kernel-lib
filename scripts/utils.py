@@ -23,6 +23,7 @@
 #    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #    SOFTWARE.
 
+from turtle import color
 import numpy as np
 
 
@@ -69,3 +70,13 @@ def draw_mesh(x, y, z, triangles, function, center=0):
     v_options = {'mode': 'sphere',
                  'scale_factor': 1e-1, }
     mlab.points3d(x[center], y[center], z[center], **v_options)
+
+
+def draw_field(x, y, z, u, v, w, triangles, function, center=0):
+    from mayavi import mlab
+    mlab.triangular_mesh(x, y, z, triangles, color=(1, 1, 1))
+    v_options = {'mode': 'sphere',
+                 'scale_factor': 1e-1}
+    mlab.points3d(x[center], y[center], z[center], **v_options)
+    obj = mlab.quiver3d(x, y, z, u, v, w, scalars=function, scale_mode='none')
+    obj.glyph.color_mode = 'color_by_scalar'
