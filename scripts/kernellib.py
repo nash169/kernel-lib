@@ -23,7 +23,6 @@
 #    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #    SOFTWARE.
 
-from importlib_metadata import requires
 from waflib.Configure import conf
 from utils import check_include, check_lib, check_config
 
