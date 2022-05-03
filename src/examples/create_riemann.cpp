@@ -139,12 +139,26 @@ int main(int argc, char const* argv[])
             X_train.row(i) = torus_embed(Eigen::RowVector2d(x_distr(eng), y_distr(eng)));
     }
 
+    // Calculate kernel derivative and project it onto the manifold
+    Eigen::MatrixXd grad = -k.gramGrad(X, Eigen::MatrixXd(X.row(0)));
+
+    auto project_sphere = [](const Eigen::MatrixXd& x, const Eigen::MatrixXd& u) {
+        Eigen::MatrixXd p(u.rows(), u.cols()),
+            I = Eigen::MatrixXd::Identity(u.cols(), u.cols());
+
+        for (size_t i = 0; i < p.rows(); i++)
+            p.row(i) = (I - x.row(i).transpose() * x.row(i)) * u.row(i).transpose();
+
+        return p;
+    };
+
     mn.setFile("outputs/riemann.csv")
         .write("NODES", X, "CHART", X_chart, "EMBED", X_embed, "INDEX", I,
-            "SURF", k.gram(X_embed, Eigen::MatrixXd(X.row(0))),
-            "MESH", k.gram(X, Eigen::MatrixXd(X.row(0))),
+            "SURF", -k.gram(X_embed, Eigen::MatrixXd(X.row(0))),
+            "MESH", -k.gram(X, Eigen::MatrixXd(X.row(0))),
             "GRAM", k.gram(X_train, X_train),
-            "GRADIENT", k.gramGrad(X_embed, Eigen::MatrixXd(X.row(0))));
+            "GRADIENT", grad,
+            "PROJ", project_sphere(X, grad));
 
     return 0;
 }
