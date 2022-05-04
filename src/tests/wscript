@@ -48,6 +48,7 @@ def build(bld):
         "riemann_gradients.cpp": ["UTILSLIB"],
         "riemann_methods.cpp": ["UTILSLIB"],
         "kernel_methods.cpp": ["UTILSLIB"],
+        "network.cpp": ["LIBTORCH"],
     }
 
     # External optional libraries for the tests
