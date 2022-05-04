@@ -66,6 +66,7 @@ def get_data(file_path, *args):
 
 def draw_mesh(x, y, z, triangles, function, center=0):
     from mayavi import mlab
+    mlab.figure()
     mlab.triangular_mesh(x, y, z, triangles, scalars=function)
     v_options = {'mode': 'sphere',
                  'scale_factor': 1e-1, }
@@ -74,6 +75,7 @@ def draw_mesh(x, y, z, triangles, function, center=0):
 
 def draw_field(x, y, z, u, v, w, triangles, function, center=0):
     from mayavi import mlab
+    mlab.figure()
     mlab.triangular_mesh(x, y, z, triangles, color=(1, 1, 1))
     v_options = {'mode': 'sphere',
                  'scale_factor': 1e-1}

@@ -31,7 +31,6 @@ from scipy.linalg import norm
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import Normalize
-import pyvista as pv
 
 
 from utils import draw_field, draw_mesh, get_data
@@ -132,5 +131,5 @@ elif kernel == 'riemann':
     K = data["GRAM"]
 
     x, y, z = (N[:, i] for i in range(3))
-    # draw_mesh(x, y, z, I, F, 0)
+    draw_mesh(x, y, z, I, F, 0)
     draw_field(x, y, z, GsXp, GsYp, GsZp, I, F, 0)
