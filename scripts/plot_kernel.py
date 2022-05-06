@@ -103,26 +103,6 @@ elif kernel == 'riemann':
     fig_2.colorbar(surf, ax=ax)
     ax.set_box_aspect((np.ptp(Xe), np.ptp(Ye), np.ptp(Ze)))
 
-    # # Non-projected vector field
-    # fig_3 = plt.figure()
-    # ax = fig_3.add_subplot(111, projection="3d")
-    # skip = 5
-    # ax.quiver(Xe[::skip, ::skip], Ye[::skip, ::skip], Ze[::skip, ::skip],
-    #           GsX[::skip, ::skip], GsY[::skip, ::skip], GsZ[::skip, ::skip], length=0.1)
-    # ax.set_box_aspect((np.ptp(Xe), np.ptp(Ye), np.ptp(Ze)))
-
-    # # Projected vector field
-    # fig_4 = plt.figure()
-    # ax = fig_4.add_subplot(111, projection="3d")
-    # surf = ax.plot_surface(Xe, Ye, Ze, color='g',
-    #                        antialiased=True, linewidth=0)
-    # ax.quiver(Xe.flatten()[::skip], Ye.flatten()[::skip], Ze.flatten()[::skip],
-    #           GsXp.flatten()[::skip], GsYp.flatten()[::skip], GsZp.flatten()[::skip], length=0.1, color=cm.jet(
-    #     Fs.flatten()))
-    # ax.set_box_aspect((np.ptp(Xe), np.ptp(Ye), np.ptp(Ze)))
-
-    # plt.show()
-
     # Mesh kernel solution
     N = data["NODES"]
     I = data["INDEX"]
@@ -133,3 +113,5 @@ elif kernel == 'riemann':
     x, y, z = (N[:, i] for i in range(3))
     draw_mesh(x, y, z, I, F, 0)
     draw_field(x, y, z, GsXp, GsYp, GsZp, I, F, 0)
+
+    plt.show()
