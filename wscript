@@ -177,5 +177,5 @@ def build(bld):
     bld.install_files("${PREFIX}/share/waf", "scripts/kernellib.py")
 
     # Install configuration file
-    bld.install_files(
-        "${PREFIX}/share/waf/", "build/kernellib_config.py")
+    bld.install_files("${PREFIX}/share/waf/", "build/kernellib_config.py")
+    bld.install_files("${PREFIX}/share/waf/", "waf_tools/utils.py")
