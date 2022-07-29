@@ -24,56 +24,39 @@
 #    SOFTWARE.
 
 import os
-import fnmatch
+
+required = {"bench_kernel.cpp": ["UTILSLIB"],
+            "bench_expansion.cpp": ["UTILSLIB"],
+            "bench_riemann.cpp": ["UTILSLIB"], }
+optional = {}
+
+
+def options(opt):
+    pass
+
+
+def configure(cfg):
+    pass
 
 
 def build(bld):
-    # Includes
-    includes_path = ".."
-
-    # Get source files
     sources = []
-    for root, _, filenames in os.walk(bld.path.abspath()):
-        for filename in fnmatch.filter(filenames, "*.cpp"):
-            sources.append(os.path.join(root, filename))
-    sources = [f[len(bld.path.abspath()) + 1:] for f in sources]
+    for _, _, filenames in os.walk(bld.path.abspath()):
+        sources += [
+            filename for filename in filenames if filename.endswith(('.cpp', '.cc'))]
 
-    # External required libraries for the benchmarks
-    benchmark_required = {"bench_kernel.cpp": ["UTILSLIB"],
-                          "bench_expansion.cpp": ["UTILSLIB"],
-                          "bench_riemann.cpp": ["UTILSLIB"]}
+    # Compile all the examples
+    for src in sources:
+        if src in required:
+            if not set(required[src]).issubset(bld.env["libs"]):
+                break
 
-    # External optional libraries for the benchmarks
-    benchmark_optional = {}
-
-    # Compile all the benchmarks
-    for benchmark in sources:
-        # Activate optional defines
-        if benchmark in benchmark_optional and set(benchmark_optional[benchmark]).issubset(bld.env["libs"]):
-            optional_defines = None
-        else:
-            optional_defines = None
-
-        if benchmark in benchmark_required:
-            if set(benchmark_required[benchmark]).issubset(bld.env["libs"]):
-                bld.program(
-                    features="cxx",
-                    install_path=None,
-                    source=benchmark,
-                    includes=includes_path,
-                    uselib=bld.env["libs"],
-                    use=bld.env["libname"],
-                    defines=optional_defines,
-                    target=benchmark[: len(benchmark) - len(".cpp")],
-                )
-        else:
-            bld.program(
-                features="cxx",
-                install_path=None,
-                source=benchmark,
-                includes=includes_path,
-                uselib=bld.env["libs"],
-                use=bld.env["libname"],
-                defines=optional_defines,
-                target=benchmark[: len(benchmark) - len(".cpp")],
-            )
+        bld.program(
+            features="cxx",
+            install_path=None,
+            source=src,
+            includes="..",
+            uselib=bld.env["libs"],
+            use=bld.env["libname"],
+            target=src[: len(src) - len(".cpp")],
+        )
